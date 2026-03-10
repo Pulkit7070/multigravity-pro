@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Multigravity Pro</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      color: #24292f;
+      background: #fff;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    .container {
+      max-width: 880px;
+      margin: 0 auto;
+      padding: 40px 24px 80px;
+    }
+
+    h1 {
+      font-size: 2em;
+      font-weight: 600;
+      color: #0969da;
+      margin-bottom: 12px;
+    }
+
+    h2 {
+      font-size: 1.5em;
+      font-weight: 600;
+      margin-top: 48px;
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid #d1d9e0;
+    }
+
+    h3 {
+      font-size: 1.17em;
+      font-weight: 600;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    p { margin: 12px 0; }
+
+    a { color: #0969da; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .badges {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+    }
+
+    .badges img { height: 20px; }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tagline {
+      font-size: 1.05em;
+      font-weight: 600;
+    }
+
+    .subtitle { color: #656d76; }
+
+    blockquote {
+      border-left: 4px solid #d1d9e0;
+      padding: 4px 16px;
+      color: #656d76;
+      margin: 16px 0;
+    }
+
+    hr {
+      border: none;
+      border-top: 1px solid #d1d9e0;
+      margin: 32px 0;
+    }
+
+    /* Code blocks */
+    .code-block {
+      position: relative;
+      margin: 12px 0;
+    }
+
+    .code-block pre {
+      background: #f6f8fa;
+      border-radius: 8px;
+      padding: 16px;
+      padding-right: 48px;
+      overflow-x: auto;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+
+    .code-block code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+    }
+
+    .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #fff;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #656d76;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .code-block:hover .copy-btn { opacity: 1; }
+
+    .copy-btn:hover {
+      background: #f6f8fa;
+      color: #24292f;
+    }
+
+    .copy-btn.copied {
+      color: #1a7f37;
+      border-color: #1a7f37;
+    }
+
+    /* Inline code */
+    p code, li code, td code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      background: #f6f8fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0;
+      font-size: 0.95em;
+    }
+
+    th, td {
+      text-align: left;
+      padding: 10px 14px;
+      border: 1px solid #d1d9e0;
+    }
+
+    th {
+      background: #f6f8fa;
+      font-weight: 600;
+    }
+
+    /* Lists */
+    ul, ol {
+      padding-left: 24px;
+      margin: 8px 0;
+    }
+
+    li { margin: 4px 0; }
+
+    /* Terminal output */
+    .terminal {
+      background: #24292f;
+      color: #e6edf3;
+      border-radius: 8px;
+      padding: 16px;
+      margin: 12px 0;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      line-height: 1.6;
+      overflow-x: auto;
+    }
+
+    .terminal .g { color: #3fb950; }
+    .terminal .y { color: #d29922; }
+    .terminal .b { color: #58a6ff; }
+    .terminal .d { color: #8b949e; }
+
+    /* Command table */
+    .cmd-table td:first-child {
+      white-space: nowrap;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+    }
+
+    .credits {
+      color: #656d76;
+      font-size: 0.9em;
+    }
+
+    .credits a { color: #0969da; }
+
+    @media (max-width: 640px) {
+      h1 { font-size: 1.6em; }
+      .container { padding: 24px 16px 60px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+
+    <h1>multigravity-pro</h1>
+
+    <div class="badges">
+      <a href="https://github.com/Pulkit7070/multigravity-pro"><img src="https://img.shields.io/badge/GitHub-Repository-blue?logo=github" alt="Repository"></a>
+      <a href="https://github.com/Pulkit7070"><img src="https://img.shields.io/badge/GitHub-Profile-blue?logo=github" alt="Profile"></a>
+      <img src="https://img.shields.io/github/stars/Pulkit7070/multigravity-pro?style=social" alt="Stars">
+    </div>
+
+    <img src="assets/multigravity-logo.jpg" alt="Multigravity" class="logo">
+
+    <h2 style="margin-top: 0;">Multigravity</h2>
+
+    <p class="tagline">Run multiple Antigravity IDE profiles at the same time &mdash; each with its own accounts, settings, and extensions.</p>
+
+    <p class="subtitle">No more logging in and out. Just switch profiles instantly or use them all at once.</p>
+
+    <blockquote>Supported OS: macOS, Windows, and Linux.</blockquote>
+
+    <hr>
+
+    <!-- Install -->
+    <h2>Install</h2>
+
+    <h3>macOS / Linux</h3>
+    <p>Open your terminal and paste this:</p>
+    <div class="code-block">
+      <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.sh)"</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <h3>Windows</h3>
+    <p>Open <strong>PowerShell</strong> and paste:</p>
+    <div class="code-block">
+      <pre><code>irm https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.ps1 | iex</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <p>That's it. Multigravity is now installed.</p>
+
+    <hr>
+
+    <!-- Getting Started -->
+    <h2>Getting Started</h2>
+
+    <h3>1. Create a profile</h3>
+    <p>Give it any name you like &mdash; your name, a project, a client, anything:</p>
+    <div class="code-block">
+      <pre><code>multigravity new work
+multigravity new personal</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <p>This also creates a clickable launcher:</p>
+    <ul>
+      <li>macOS: <code>~/Applications/Multigravity &lt;name&gt;.app</code></li>
+      <li>Windows: <strong>Start Menu</strong> shortcut</li>
+      <li>Linux: <code>~/.local/share/applications/multigravity-&lt;name&gt;.desktop</code></li>
+    </ul>
+
+    <h3>2. Open a profile</h3>
+    <div class="code-block">
+      <pre><code>multigravity work</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <p>Antigravity will open using that profile's isolated settings, accounts, and extensions.</p>
+
+    <p>You can also pass normal Antigravity arguments through:</p>
+    <div class="code-block">
+      <pre><code>multigravity work --new-window
+multigravity work .
+multigravity work path/to/file.py</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <hr>
+
+    <!-- Auth-Only Profiles -->
+    <h2>Auth-Only Profiles</h2>
+
+    <p>Most people just need separate logins, not separate extensions. Auth-only profiles share your existing extensions and settings via symlinks &mdash; only the account is isolated.</p>
+
+    <div class="code-block">
+      <pre><code>multigravity new client-a --auth-only
+multigravity new client-b --auth-only</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <table>
+      <tr><th></th><th>Full Profile</th><th>Auth-Only</th></tr>
+      <tr><td>Extensions</td><td>Separate copy</td><td>Shared (symlink)</td></tr>
+      <tr><td>Settings</td><td>Separate copy</td><td>Shared (symlink)</td></tr>
+      <tr><td>Account / Auth</td><td>Isolated</td><td>Isolated</td></tr>
+      <tr><td>Disk usage</td><td>~500 MB</td><td>~2 MB</td></tr>
+    </table>
+
+    <hr>
+
+    <!-- Templates -->
+    <h2>Templates</h2>
+
+    <p>Set up one perfect environment, reuse it forever.</p>
+
+    <div class="code-block">
+      <pre><code># Save your configured profile as a template
+multigravity template save work python-dev
+
+# See all templates
+multigravity template list
+
+# Create a new profile from it
+multigravity new new-client --from python-dev
+
+# Remove a template
+multigravity template delete python-dev</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <hr>
+
+    <!-- Status -->
+    <h2>Status</h2>
+
+    <p>See what's happening across all your profiles:</p>
+
+    <div class="code-block">
+      <pre><code>multigravity status</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <div class="terminal">
+<span class="d">PROFILE          STATUS     TYPE         LAST USED            SIZE</span>
+<span class="d">-------          ------     ----         ---------            ----</span>
+<span class="b">client-a</span>         <span class="g">running</span>    auth-only    2026-03-10 14:30     2 MB
+<span class="b">client-b</span>         <span class="y">stopped</span>    auth-only    2026-03-08 09:15     1 MB
+<span class="b">personal</span>         <span class="y">stopped</span>    full         2026-03-09 20:00     487 MB
+<span class="b">work</span>             <span class="g">running</span>    full         2026-03-10 14:32     523 MB</div>
+
+    <hr>
+
+    <!-- Export / Import -->
+    <h2>Export / Import</h2>
+
+    <p>Move profiles between machines, share with teammates, or back up.</p>
+
+    <div class="code-block">
+      <pre><code># Export
+multigravity export work ~/Desktop/work.tar.gz     # macOS/Linux
+multigravity export work C:\backup\work.zip          # Windows
+
+# Import (auto-detects profile name from the file)
+multigravity import work.tar.gz
+multigravity import work.zip client-setup            # custom name</code></pre>
+      <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+    </div>
+
+    <hr>
+
+    <!-- All Commands -->
+    <h2>All Commands</h2>
+
+    <table class="cmd-table">
+      <tr><th>Command</th><th>Description</th></tr>
+      <tr><td>multigravity new &lt;name&gt;</td><td>Create a new full profile</td></tr>
+      <tr><td>multigravity new &lt;name&gt; --auth-only</td><td>Create an auth-only profile</td></tr>
+      <tr><td>multigravity new &lt;name&gt; --from &lt;tpl&gt;</td><td>Create from a saved template</td></tr>
+      <tr><td>multigravity &lt;name&gt; [args...]</td><td>Launch a profile</td></tr>
+      <tr><td>multigravity list</td><td>List all profiles</td></tr>
+      <tr><td>multigravity status</td><td>Show running/stopped, type, last used, size</td></tr>
+      <tr><td>multigravity clone &lt;src&gt; &lt;dest&gt;</td><td>Copy a profile</td></tr>
+      <tr><td>multigravity rename &lt;old&gt; &lt;new&gt;</td><td>Rename a profile</td></tr>
+      <tr><td>multigravity delete &lt;name&gt;</td><td>Delete a profile (with confirmation)</td></tr>
+      <tr><td>multigravity template save &lt;profile&gt; &lt;name&gt;</td><td>Save profile as template</td></tr>
+      <tr><td>multigravity template list</td><td>List all templates</td></tr>
+      <tr><td>multigravity template delete &lt;name&gt;</td><td>Remove a template</td></tr>
+      <tr><td>multigravity export &lt;name&gt; [path]</td><td>Export profile to archive</td></tr>
+      <tr><td>multigravity import &lt;archive&gt; [name]</td><td>Import profile from archive</td></tr>
+      <tr><td>multigravity doctor</td><td>Check environment health</td></tr>
+      <tr><td>multigravity stats</td><td>Disk usage per profile</td></tr>
+      <tr><td>multigravity update</td><td>Self-update</td></tr>
+      <tr><td>multigravity completion</td><td>Shell autocompletion setup</td></tr>
+      <tr><td>multigravity help</td><td>Show help</td></tr>
+    </table>
+
+    <hr>
+
+    <!-- Profile Name Rules -->
+    <h2>Profile Name Rules</h2>
+    <ul>
+      <li>Letters, numbers, and hyphens only</li>
+      <li>Must start with a letter or number</li>
+      <li>Valid: <code>work</code>, <code>client-a</code>, <code>test1</code></li>
+      <li>Invalid: <code>-name</code>, <code>my_profile</code>, <code>has spaces</code></li>
+    </ul>
+
+    <hr>
+
+    <!-- What's New in Pro -->
+    <h2>What's New in Pro</h2>
+
+    <table>
+      <tr><th>Feature</th><th>Command</th><th>What it does</th></tr>
+      <tr>
+        <td>Auth-only profiles</td>
+        <td><code>new work --auth-only</code></td>
+        <td>Share extensions and settings across profiles, isolate only the login. Near-zero disk usage.</td>
+      </tr>
+      <tr>
+        <td>Profile templates</td>
+        <td><code>template save work py-dev</code></td>
+        <td>Save a configured profile as a reusable starting point. <code>new x --from py-dev</code> to stamp out copies.</td>
+      </tr>
+      <tr>
+        <td>Status dashboard</td>
+        <td><code>status</code></td>
+        <td>See which profiles are running, their type, last used time, and disk size.</td>
+      </tr>
+      <tr>
+        <td>Export / Import</td>
+        <td><code>export work ./work.zip</code></td>
+        <td>Pack a profile into one portable file. Move between machines, share with teammates.</td>
+      </tr>
+      <tr>
+        <td>Windows support fixed</td>
+        <td>All commands</td>
+        <td>The original Windows support was broken. Rewrote the PowerShell script with proper stream handling, symlink creation, and tested all 40+ edge cases.</td>
+      </tr>
+    </table>
+
+    <p>Everything from the original <a href="https://github.com/sujitagarwal/multigravity-cli">multigravity-cli</a> still works &mdash; <code>new</code>, <code>list</code>, <code>clone</code>, <code>rename</code>, <code>delete</code>, <code>doctor</code>, <code>stats</code>, <code>update</code>, <code>completion</code>.</p>
+
+    <hr>
+
+    <!-- Credits -->
+    <div class="credits">
+      <h2>Credits</h2>
+      <p>Multigravity Pro is built on top of <a href="https://github.com/sujitagarwal/multigravity-cli">multigravity-cli</a> by <a href="https://github.com/sujitagarwal">Sujit Agarwal</a>.</p>
+      <p style="margin-top: 24px;">MIT License</p>
+    </div>
+
+  </div>
+
+  <script>
+    function copyCode(btn) {
+      const code = btn.previousElementSibling.querySelector('code');
+      const text = code.innerText;
+      navigator.clipboard.writeText(text).then(function () {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function () {
+          btn.textContent = 'Copy';
+          btn.classList.remove('copied');
+        }, 2000);
+      });
+    }
+  </script>
+</body>
+</html>

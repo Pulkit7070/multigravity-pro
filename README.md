@@ -187,6 +187,7 @@ multigravity help
 | Profile templates | `template save work py-dev` | Save a configured profile as a reusable starting point. `new x --from py-dev` to stamp out copies. |
 | Status dashboard | `status` | See which profiles are running, their type, last used time, and disk size — at a glance. |
 | Export / Import | `export work ./work.zip` | Pack a profile into one portable file. Move between machines, share with teammates, back up. |
+| Windows support fixed | All commands | The original Windows support was broken. Rewrote the PowerShell script with proper stream handling, symlink creation, and tested all 40+ edge cases. |
 
 Everything from the original [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) still works — `new`, `list`, `clone`, `rename`, `delete`, `doctor`, `stats`, `update`, `completion`.
 
@@ -195,10 +196,6 @@ Everything from the original [multigravity-cli](https://github.com/sujitagarwal/
 ## Credits
 
 Multigravity Pro is built on top of [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) by [Sujit Agarwal](https://github.com/sujitagarwal).
-
-- Original project: [sujitagarwal/multigravity-cli](https://github.com/sujitagarwal/multigravity-cli)
-- Windows support: [Samin Yeasar](https://github.com/Solez-ai)
-- Linux support: [Md Rayyan Nawaz](https://github.com/therayyanawaz)
 
 ## License
 
