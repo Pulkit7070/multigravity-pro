@@ -34,7 +34,11 @@ Open **PowerShell** and paste:
 irm https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.ps1 | iex
 ```
 
-That's it. Multigravity is now installed.
+That's it. Multigravity is now installed. Verify everything is set up correctly:
+
+```bash
+multigravity doctor
+```
 
 ---
 
@@ -70,6 +74,16 @@ multigravity work --new-window
 multigravity work .
 multigravity work path/to/file.py
 ```
+
+### 3. Enable tab completion (optional)
+
+Get autocomplete for all commands and profile names in your shell:
+
+```bash
+multigravity completion
+```
+
+Follow the printed instructions to add it to your shell profile. Works with bash and zsh.
 
 ---
 
