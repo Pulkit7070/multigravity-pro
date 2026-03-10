@@ -59,6 +59,29 @@ extensions_dir() {
   printf '%s/.antigravity/extensions\n' "$profile_path"
 }
 
+default_user_data_dir() {
+  case "$(platform)" in
+    darwin)
+      printf '%s/Library/Application Support/Antigravity\n' "$HOME"
+      ;;
+    linux)
+      printf '%s/.config/Antigravity\n' "$HOME"
+      ;;
+  esac
+}
+
+default_extensions_dir() {
+  printf '%s/.antigravity/extensions\n' "$HOME"
+}
+
+templates_dir() {
+  printf '%s/.templates\n' "$BASE"
+}
+
+is_auth_only() {
+  [ -f "$(profile_dir "$1")/.auth-only" ]
+}
+
 linux_launcher_dir() {
   printf '%s/.local/share/multigravity/launchers\n' "$HOME"
 }
@@ -182,6 +205,61 @@ create_profile_layout() {
     linux)
       mkdir -p \
         "$profile_path/.config/Antigravity" \
+        "$profile_path/.cache" \
+        "$profile_path/.local/share" \
+        "$profile_path/.local/state"
+      ;;
+  esac
+}
+
+create_auth_only_layout() {
+  local profile_path=$1
+  local default_data default_ext
+
+  default_data="$(default_user_data_dir)"
+  default_ext="$(default_extensions_dir)"
+
+  mkdir -p "$profile_path"
+
+  # Mark as auth-only
+  touch "$profile_path/.auth-only"
+
+  # Create user data dir (holds isolated auth/account state)
+  local data_dir
+  data_dir="$(user_data_dir "$profile_path")"
+  mkdir -p "$data_dir/User"
+
+  # Symlink shared settings from default installation
+  if [ -d "$default_data/User" ]; then
+    for item in settings.json keybindings.json snippets; do
+      local src="$default_data/User/$item"
+      local dest="$data_dir/User/$item"
+      if [ -e "$src" ] && [ ! -e "$dest" ]; then
+        ln -s "$src" "$dest"
+      fi
+    done
+  fi
+
+  # Symlink extensions to default (shared, not copied)
+  local ext_dir
+  ext_dir="$(extensions_dir "$profile_path")"
+  if [ -d "$default_ext" ]; then
+    # Remove the empty dir created by mkdir, replace with symlink
+    rmdir "$ext_dir" 2>/dev/null || true
+    ln -s "$default_ext" "$ext_dir"
+  else
+    mkdir -p "$ext_dir"
+  fi
+
+  case "$(platform)" in
+    darwin)
+      mkdir -p "$profile_path/Library/Application Support"
+      if [ ! -e "$profile_path/Library/Keychains" ] && [ -d "$HOME/Library/Keychains" ]; then
+        ln -s "$HOME/Library/Keychains" "$profile_path/Library/Keychains"
+      fi
+      ;;
+    linux)
+      mkdir -p \
         "$profile_path/.cache" \
         "$profile_path/.local/share" \
         "$profile_path/.local/state"
@@ -408,7 +486,10 @@ list_profiles() {
 
   for dir in "$BASE"/*; do
     [ -d "$dir" ] || continue
-    entries="${entries}$(basename "$dir")"$'\n'
+    local name
+    name="$(basename "$dir")"
+    [ "$name" = ".templates" ] && continue
+    entries="${entries}${name}"$'\n'
   done
 
   if [ -z "$entries" ]; then
@@ -421,18 +502,43 @@ list_profiles() {
 }
 
 new_profile() {
-  local profile=$1
-  local profile_path
+  local profile=""
+  local auth_only=false
+  local from_template=""
+
+  while [ $# -gt 0 ]; do
+    case "$1" in
+      --auth-only) auth_only=true ;;
+      --from) from_template="${2-}"; shift ;;
+      -*) abort "unknown option: $1" ;;
+      *) profile="$1" ;;
+    esac
+    shift
+  done
 
   validate_name "$profile"
 
+  local profile_path
   profile_path="$(profile_dir "$profile")"
   if [ -d "$profile_path" ]; then
     abort "profile '$profile' already exists"
   fi
 
   mkdir -p "$BASE"
-  create_profile_layout "$profile_path"
+
+  if [ -n "$from_template" ]; then
+    local tpl_path
+    tpl_path="$(templates_dir)/$from_template"
+    if [ ! -d "$tpl_path" ]; then
+      abort "template '$from_template' does not exist. Run: multigravity template list"
+    fi
+    print_info "Creating profile '$profile' from template '$from_template'..."
+    cp -R "$tpl_path" "$profile_path"
+  elif [ "$auth_only" = true ]; then
+    create_auth_only_layout "$profile_path"
+  else
+    create_profile_layout "$profile_path"
+  fi
 
   print_info "Created profile '$profile'"
   create_shortcut "$profile"
@@ -595,7 +701,8 @@ profile_stats() {
     [ -d "$dir" ] || continue
     local name
     name=$(basename "$dir")
-    
+    [ "$name" = ".templates" ] && continue
+
     local size
     if [ "$(uname -s)" = "Darwin" ]; then
       size=$(du -sh "$dir" | cut -f1)
@@ -670,9 +777,13 @@ _multigravity() {
     commands=(
         'new:Create a new profile'
         'list:List existing profiles'
+        'status:Show profile status (running, type, last used)'
         'rename:Rename a profile'
         'delete:Delete a profile'
         'clone:Clone an existing profile'
+        'template:Manage profile templates (save, list, delete)'
+        'export:Export a profile to tar.gz'
+        'import:Import a profile from tar.gz'
         'update:Update multigravity'
         'doctor:Run system diagnosis'
         'stats:Show profile storage usage'
@@ -709,7 +820,7 @@ _multigravity_completions() {
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="new list rename delete clone update doctor stats completion help"
+    opts="new list status rename delete clone template export import update doctor stats completion help"
  pocket
 
     if [[ ${COMP_CWORD} -eq 1 ]] ; then
@@ -732,36 +843,254 @@ EOF
   esac
 }
 
+# ─── Template commands ────────────────────────────────────────────────────────
 
+template_save() {
+  local profile=$1
+  local tpl_name=$2
+
+  validate_name "$profile"
+  validate_name "$tpl_name"
+
+  local profile_path
+  profile_path="$(profile_dir "$profile")"
+  if [ ! -d "$profile_path" ]; then
+    abort "profile '$profile' does not exist"
+  fi
+
+  local tpl_dir
+  tpl_dir="$(templates_dir)"
+  local tpl_path="$tpl_dir/$tpl_name"
+
+  if [ -d "$tpl_path" ]; then
+    abort "template '$tpl_name' already exists"
+  fi
+
+  mkdir -p "$tpl_dir"
+  print_info "Saving profile '$profile' as template '$tpl_name'..."
+  cp -R "$profile_path" "$tpl_path"
+
+  # Remove auth-only marker from template (let the user choose on creation)
+  rm -f "$tpl_path/.auth-only"
+
+  print_info "Template '$tpl_name' saved"
+}
+
+template_list() {
+  local tpl_dir
+  tpl_dir="$(templates_dir)"
+
+  echo "Available templates:"
+
+  if [ ! -d "$tpl_dir" ]; then
+    echo "  (none)"
+    return 0
+  fi
+
+  local found=false
+  for dir in "$tpl_dir"/*; do
+    [ -d "$dir" ] || continue
+    found=true
+    local name
+    name=$(basename "$dir")
+    local size
+    size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+    echo "  $name  ($size)"
+  done
+
+  if [ "$found" = false ]; then
+    echo "  (none)"
+  fi
+}
+
+template_delete() {
+  local tpl_name=$1
+  validate_name "$tpl_name"
+
+  local tpl_path
+  tpl_path="$(templates_dir)/$tpl_name"
+
+  if [ ! -d "$tpl_path" ]; then
+    abort "template '$tpl_name' does not exist"
+  fi
+
+  rm -rf "$tpl_path"
+  print_info "Deleted template '$tpl_name'"
+}
+
+# ─── Status command ───────────────────────────────────────────────────────────
+
+status_profiles() {
+  if [ ! -d "$BASE" ]; then
+    print_info "No profiles found."
+    return 0
+  fi
+
+  printf "%-16s %-10s %-12s %-20s %s\n" "PROFILE" "STATUS" "TYPE" "LAST USED" "SIZE"
+  printf "%-16s %-10s %-12s %-20s %s\n" "-------" "------" "----" "---------" "----"
+
+  for dir in "$BASE"/*; do
+    [ -d "$dir" ] || continue
+    local name
+    name=$(basename "$dir")
+
+    # Skip .templates directory
+    [ "$name" = ".templates" ] && continue
+
+    # Check if running
+    local status="stopped"
+    local data_dir
+    data_dir="$(user_data_dir "$dir")"
+    if ps -eo args 2>/dev/null | grep -v grep | grep -qF "$data_dir" 2>/dev/null; then
+      status="running"
+    fi
+
+    # Type
+    local ptype="full"
+    if [ -f "$dir/.auth-only" ]; then
+      ptype="auth-only"
+    fi
+
+    # Last used (directory modification time)
+    local last_used="unknown"
+    case "$(platform)" in
+      darwin)
+        last_used=$(stat -f "%Sm" -t "%Y-%m-%d %H:%M" "$dir" 2>/dev/null || echo "unknown")
+        ;;
+      linux)
+        last_used=$(stat -c "%y" "$dir" 2>/dev/null | cut -d'.' -f1 || echo "unknown")
+        ;;
+    esac
+
+    # Size
+    local size
+    size=$(du -sh "$dir" 2>/dev/null | cut -f1)
+
+    # Color for running status
+    if [ "$status" = "running" ]; then
+      printf "%-16s \033[32m%-10s\033[0m %-12s %-20s %s\n" "$name" "$status" "$ptype" "$last_used" "$size"
+    else
+      printf "%-16s %-10s %-12s %-20s %s\n" "$name" "$status" "$ptype" "$last_used" "$size"
+    fi
+  done
+}
+
+# ─── Export / Import ──────────────────────────────────────────────────────────
+
+export_profile() {
+  local profile=$1
+  local output_path=${2-}
+
+  validate_name "$profile"
+
+  local profile_path
+  profile_path="$(profile_dir "$profile")"
+  if [ ! -d "$profile_path" ]; then
+    abort "profile '$profile' does not exist"
+  fi
+
+  if [ -z "$output_path" ]; then
+    output_path="./${profile}.tar.gz"
+  fi
+
+  print_info "Exporting profile '$profile'..."
+
+  # Resolve symlinks before archiving (follow links)
+  tar -czf "$output_path" -C "$BASE" "$profile"
+
+  print_info "Exported to $output_path"
+}
+
+import_profile() {
+  local archive_path=$1
+  local profile=${2-}
+
+  if [ -z "$archive_path" ]; then
+    abort "usage: multigravity import <archive> [profile-name]"
+  fi
+
+  if [ ! -f "$archive_path" ]; then
+    abort "file '$archive_path' not found"
+  fi
+
+  # Auto-detect profile name from archive if not provided
+  if [ -z "$profile" ]; then
+    profile=$(tar -tzf "$archive_path" 2>/dev/null | head -1 | cut -d'/' -f1)
+    if [ -z "$profile" ]; then
+      abort "could not determine profile name from archive. Specify a name: multigravity import <path> <name>"
+    fi
+  fi
+
+  validate_name "$profile"
+
+  local profile_path
+  profile_path="$(profile_dir "$profile")"
+  if [ -d "$profile_path" ]; then
+    abort "profile '$profile' already exists"
+  fi
+
+  mkdir -p "$BASE"
+
+  print_info "Importing profile as '$profile'..."
+
+  # Check if archive root matches profile name
+  local top_dir
+  top_dir=$(tar -tzf "$archive_path" 2>/dev/null | head -1 | cut -d'/' -f1)
+
+  if [ "$top_dir" = "$profile" ]; then
+    tar -xzf "$archive_path" -C "$BASE"
+  elif [ -n "$top_dir" ]; then
+    tar -xzf "$archive_path" -C "$BASE"
+    # Rename extracted dir if needed
+    if [ "$top_dir" != "$profile" ] && [ -d "$BASE/$top_dir" ]; then
+      mv "$BASE/$top_dir" "$profile_path"
+    fi
+  else
+    mkdir -p "$profile_path"
+    tar -xzf "$archive_path" -C "$profile_path"
+  fi
+
+  create_shortcut "$profile"
+  print_info "Imported profile '$profile'"
+}
 
 usage() {
   cat <<EOF
 Usage: multigravity <command> [args]
 
 Commands:
-  new <name>            Create a new named profile + desktop shortcut
-  list                  List existing profiles
-  rename <old> <new>    Rename a profile (updates its shortcut)
-  delete <name>         Delete a profile and its data
-  clone <src> <dest>    Clone an existing profile
-  update                Update multigravity to the latest version
-  doctor                Run a system diagnosis
-  stats                 Show storage usage per profile
-  completion            Show setup instructions for shell completion
-  <name> [args...]      Launch Antigravity with the given profile
-  help                  Show this help
+  new <name> [options]    Create a new named profile + desktop shortcut
+      --auth-only         Share extensions & settings, isolate only accounts
+      --from <template>   Create from a saved template
+  list                    List existing profiles
+  status                  Show which profiles are running, type, last used
+  rename <old> <new>      Rename a profile (updates its shortcut)
+  delete <name>           Delete a profile and its data
+  clone <src> <dest>      Clone an existing profile
+  template save <profile> <name>   Save a profile as a reusable template
+  template list           List available templates
+  template delete <name>  Delete a template
+  export <name> [path]    Export a profile to a tar.gz archive
+  import <archive> [name] Import a profile from a tar.gz archive
+  update                  Update multigravity to the latest version
+  doctor                  Run a system diagnosis
+  stats                   Show storage usage per profile
+  completion              Show setup instructions for shell completion
+  <name> [args...]        Launch Antigravity with the given profile
+  help                    Show this help
 
 Profile names: alphanumeric and hyphens only (e.g. work, personal, test-1)
 
 Environment:
-  MULTIGRAVITY_APP      Override the Antigravity app path or command
-  MULTIGRAVITY_HOME     Override the profile storage directory
+  MULTIGRAVITY_APP        Override the Antigravity app path or command
+  MULTIGRAVITY_HOME       Override the profile storage directory
 EOF
 }
 
 case "$cmd" in
   new)
-    new_profile "${2-}"
+    shift
+    new_profile "$@"
     ;;
   list)
     list_profiles "${2-}"
@@ -774,6 +1103,31 @@ case "$cmd" in
     ;;
   clone)
     clone_profile "${2-}" "${3-}"
+    ;;
+  template)
+    case "${2-}" in
+      save)
+        template_save "${3-}" "${4-}"
+        ;;
+      list)
+        template_list
+        ;;
+      delete)
+        template_delete "${3-}"
+        ;;
+      *)
+        abort "usage: multigravity template <save|list|delete>"
+        ;;
+    esac
+    ;;
+  status)
+    status_profiles
+    ;;
+  export)
+    export_profile "${2-}" "${3-}"
+    ;;
+  import)
+    import_profile "${2-}" "${3-}"
     ;;
   update)
     update_cli

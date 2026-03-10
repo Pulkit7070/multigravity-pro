@@ -38,21 +38,46 @@ function Find-Antigravity {
 
 $APP = if ($env:MULTIGRAVITY_APP) { $env:MULTIGRAVITY_APP } else { Find-Antigravity }
 
+function Get-DefaultUserDataDir {
+    return "$env:APPDATA\Antigravity"
+}
+
+function Get-DefaultExtensionsDir {
+    return "$env:USERPROFILE\.antigravity\extensions"
+}
+
+function Get-TemplatesDir {
+    return "$BASE\.templates"
+}
+
+function Test-AuthOnly {
+    param($PROFILE)
+    return Test-Path "$BASE\$PROFILE\.auth-only"
+}
+
 function Write-Usage {
     Write-Host "Usage: multigravity <command> [args]"
     Write-Host ""
     Write-Host "Commands:"
-    Write-Host "  new <name>            Create a new named profile + Start Menu shortcut"
-    Write-Host "  list                  List existing profiles"
-    Write-Host "  rename <old> <new>    Rename a profile (updates shortcut if present)"
-    Write-Host "  delete <name>         Delete a profile and its data"
-    Write-Host "  clone <src> <dest>    Clone an existing profile"
-    Write-Host "  update                Update multigravity to the latest version"
-    Write-Host "  doctor                Run a system diagnosis"
-    Write-Host "  stats                 Show storage usage per profile"
-    Write-Host "  completion            Show setup instructions for shell completion"
-    Write-Host "  <name>                Launch Antigravity with the given profile"
-    Write-Host "  help                  Show this help"
+    Write-Host "  new <name> [options]    Create a new named profile + Start Menu shortcut"
+    Write-Host "      --auth-only         Share extensions & settings, isolate only accounts"
+    Write-Host "      --from <template>   Create from a saved template"
+    Write-Host "  list                    List existing profiles"
+    Write-Host "  status                  Show which profiles are running, type, last used"
+    Write-Host "  rename <old> <new>      Rename a profile (updates shortcut if present)"
+    Write-Host "  delete <name>           Delete a profile and its data"
+    Write-Host "  clone <src> <dest>      Clone an existing profile"
+    Write-Host "  template save <profile> <name>   Save a profile as a reusable template"
+    Write-Host "  template list           List available templates"
+    Write-Host "  template delete <name>  Delete a template"
+    Write-Host "  export <name> [path]    Export a profile to a .zip archive"
+    Write-Host "  import <archive> [name] Import a profile from a .zip archive"
+    Write-Host "  update                  Update multigravity to the latest version"
+    Write-Host "  doctor                  Run a system diagnosis"
+    Write-Host "  stats                   Show storage usage per profile"
+    Write-Host "  completion              Show setup instructions for shell completion"
+    Write-Host "  <name>                  Launch Antigravity with the given profile"
+    Write-Host "  help                    Show this help"
     Write-Host ""
     Write-Host "Profile names: alphanumeric and hyphens only (e.g. work, personal, test-1)"
 }
@@ -72,10 +97,48 @@ function Validate-Name {
 function Invoke-CreateProfile {
     param($PROFILE)
     $PROFILE_DIR = "$BASE\$PROFILE"
-    
+
     New-Item -ItemType Directory -Force -Path "$PROFILE_DIR\.antigravity\extensions" | Out-Null
     New-Item -ItemType Directory -Force -Path "$PROFILE_DIR\AppData\Roaming" | Out-Null
     New-Item -ItemType Directory -Force -Path "$PROFILE_DIR\AppData\Local" | Out-Null
+}
+
+function Invoke-CreateAuthOnlyProfile {
+    param($PROFILE)
+    $PROFILE_DIR = "$BASE\$PROFILE"
+    $defaultData = Get-DefaultUserDataDir
+    $defaultExt = Get-DefaultExtensionsDir
+
+    New-Item -ItemType Directory -Force -Path $PROFILE_DIR | Out-Null
+
+    # Mark as auth-only
+    New-Item -ItemType File -Force -Path "$PROFILE_DIR\.auth-only" | Out-Null
+
+    # Create app data dirs (holds isolated auth/account state)
+    $dataDir = "$PROFILE_DIR\AppData\Roaming\Antigravity\User"
+    New-Item -ItemType Directory -Force -Path $dataDir | Out-Null
+    New-Item -ItemType Directory -Force -Path "$PROFILE_DIR\AppData\Local" | Out-Null
+
+    # Symlink shared settings from default installation
+    if (Test-Path "$defaultData\User") {
+        foreach ($item in @("settings.json", "keybindings.json", "snippets")) {
+            $src = "$defaultData\User\$item"
+            $dest = "$dataDir\$item"
+            if ((Test-Path $src) -and !(Test-Path $dest)) {
+                New-Item -ItemType SymbolicLink -Path $dest -Target $src -ErrorAction SilentlyContinue | Out-Null
+            }
+        }
+    }
+
+    # Symlink extensions to default (shared, not copied)
+    $extDir = "$PROFILE_DIR\.antigravity\extensions"
+    if (Test-Path $defaultExt) {
+        if (Test-Path $extDir) { Remove-Item $extDir -Force -ErrorAction SilentlyContinue }
+        New-Item -ItemType Directory -Force -Path "$PROFILE_DIR\.antigravity" | Out-Null
+        New-Item -ItemType SymbolicLink -Path $extDir -Target $defaultExt -ErrorAction SilentlyContinue | Out-Null
+    } else {
+        New-Item -ItemType Directory -Force -Path $extDir | Out-Null
+    }
 }
 
 function Invoke-LaunchProfile {
@@ -110,7 +173,7 @@ function Invoke-LaunchProfile {
 function Invoke-ListProfiles {
     Write-Host "Existing profiles:"
     if (Test-Path $BASE) {
-        $profiles = Get-ChildItem -Directory -Path $BASE | Where-Object { $_.PSIsContainer }
+        $profiles = Get-ChildItem -Directory -Path $BASE | Where-Object { $_.PSIsContainer -and $_.Name -ne ".templates" }
         if ($profiles.Count -gt 0) {
             foreach ($p in $profiles) {
                 Write-Host $p.Name
@@ -153,7 +216,29 @@ function Invoke-CreateShortcut {
 }
 
 function Invoke-NewProfile {
-    param($PROFILE)
+    param($PROFILE, [string[]]$ExtraArgs)
+
+    # Parse flags from extra args
+    $authOnly = $false
+    $fromTemplate = ""
+    $i = 0
+    while ($i -lt $ExtraArgs.Count) {
+        switch ($ExtraArgs[$i]) {
+            "--auth-only" { $authOnly = $true }
+            "--from" {
+                $i++
+                if ($i -lt $ExtraArgs.Count) { $fromTemplate = $ExtraArgs[$i] }
+            }
+        }
+        $i++
+    }
+
+    # If profile wasn't the first positional arg, it might be in ExtraArgs
+    if ([string]::IsNullOrWhiteSpace($PROFILE)) {
+        Write-Error "Error: profile name required"
+        exit 1
+    }
+
     Validate-Name $PROFILE
 
     $PROFILE_DIR = "$BASE\$PROFILE"
@@ -163,7 +248,21 @@ function Invoke-NewProfile {
     }
 
     New-Item -ItemType Directory -Force -Path $BASE | Out-Null
-    Invoke-CreateProfile $PROFILE
+
+    if ($fromTemplate) {
+        $tplPath = "$(Get-TemplatesDir)\$fromTemplate"
+        if (!(Test-Path $tplPath)) {
+            Write-Error "Error: template '$fromTemplate' does not exist. Run: multigravity template list"
+            exit 1
+        }
+        Write-Host "Creating profile '$PROFILE' from template '$fromTemplate'..."
+        Copy-Item -Path $tplPath -Destination $PROFILE_DIR -Recurse
+    } elseif ($authOnly) {
+        Invoke-CreateAuthOnlyProfile $PROFILE
+    } else {
+        Invoke-CreateProfile $PROFILE
+    }
+
     Write-Host "Created profile '$PROFILE'"
     Invoke-CreateShortcut $PROFILE
 }
@@ -253,7 +352,11 @@ function Invoke-CloneProfile {
 
 function Get-FolderSize {
     param($Path)
-    $size = (Get-ChildItem $Path -Recurse -ErrorAction SilentlyContinue | Measure-Object -Property Length -Sum).Sum
+    $files = Get-ChildItem $Path -Recurse -File -ErrorAction SilentlyContinue
+    $size = 0
+    if ($files) {
+        $size = ($files | Measure-Object -Property Length -Sum).Sum
+    }
     if ($size -ge 1GB) { "{0:N2} GB" -f ($size / 1GB) }
     elseif ($size -ge 1MB) { "{0:N2} MB" -f ($size / 1MB) }
     elseif ($size -ge 1KB) { "{0:N2} KB" -f ($size / 1KB) }
@@ -270,7 +373,7 @@ function Invoke-ProfileStats {
     Write-Host ("{0,-20} {1,-10} {2,-10}" -f "PROFILE", "SIZE", "EXTENSIONS")
     Write-Host ("{0,-20} {1,-10} {2,-10}" -f "-------", "----", "----------")
 
-    $profiles = Get-ChildItem -Directory -Path $BASE
+    $profiles = Get-ChildItem -Directory -Path $BASE | Where-Object { $_.Name -ne ".templates" }
     foreach ($p in $profiles) {
         $size = Get-FolderSize $p.FullName
         $extPath = Join-Path $p.FullName ".antigravity\extensions"
@@ -372,7 +475,7 @@ function Invoke-GenerateCompletion {
         @"
 Register-ArgumentCompleter -Native -CommandName multigravity -ScriptBlock {
     param(`$wordToComplete, `$commandAst, `$cursorPosition)
-    `$opts = @('new', 'list', 'rename', 'delete', 'clone', 'update', 'doctor', 'stats', 'completion', 'help')
+    `$opts = @('new', 'list', 'status', 'rename', 'delete', 'clone', 'template', 'export', 'import', 'update', 'doctor', 'stats', 'completion', 'help')
     `$profiles = if (Test-Path '$BASE') { Get-ChildItem -Directory -Path '$BASE' | Select-Object -ExpandProperty Name } else { @() }
     (`$opts + `$profiles) | Where-Object { `$_ -like "`$wordToComplete*" } | ForEach-Object {
         [System.Management.Automation.CompletionResult]::new(`$_, `$_, 'ParameterValue', `$_)
@@ -384,12 +487,209 @@ Register-ArgumentCompleter -Native -CommandName multigravity -ScriptBlock {
     }
 }
 
+# ─── Template commands ────────────────────────────────────────────────────────
+
+function Invoke-TemplateSave {
+    param($PROFILE, $TPL_NAME)
+    Validate-Name $PROFILE
+    Validate-Name $TPL_NAME
+
+    $PROFILE_DIR = "$BASE\$PROFILE"
+    if (!(Test-Path $PROFILE_DIR)) {
+        Write-Error "Error: profile '$PROFILE' does not exist"
+        exit 1
+    }
+
+    $tplDir = Get-TemplatesDir
+    $tplPath = "$tplDir\$TPL_NAME"
+
+    if (Test-Path $tplPath) {
+        Write-Error "Error: template '$TPL_NAME' already exists"
+        exit 1
+    }
+
+    New-Item -ItemType Directory -Force -Path $tplDir | Out-Null
+    Write-Host "Saving profile '$PROFILE' as template '$TPL_NAME'..."
+    Copy-Item -Path $PROFILE_DIR -Destination $tplPath -Recurse
+
+    # Remove auth-only marker from template
+    $marker = "$tplPath\.auth-only"
+    if (Test-Path $marker) { Remove-Item $marker -Force }
+
+    Write-Host "Template '$TPL_NAME' saved"
+}
+
+function Invoke-TemplateList {
+    $tplDir = Get-TemplatesDir
+    Write-Host "Available templates:"
+
+    if (!(Test-Path $tplDir)) {
+        Write-Host "  (none)"
+        return
+    }
+
+    $templates = Get-ChildItem -Directory -Path $tplDir -ErrorAction SilentlyContinue
+    if ($templates.Count -eq 0) {
+        Write-Host "  (none)"
+        return
+    }
+
+    foreach ($t in $templates) {
+        $size = Get-FolderSize $t.FullName
+        Write-Host ("  {0}  ({1})" -f $t.Name, $size)
+    }
+}
+
+function Invoke-TemplateDelete {
+    param($TPL_NAME)
+    Validate-Name $TPL_NAME
+
+    $tplPath = "$(Get-TemplatesDir)\$TPL_NAME"
+    if (!(Test-Path $tplPath)) {
+        Write-Error "Error: template '$TPL_NAME' does not exist"
+        exit 1
+    }
+
+    Remove-Item -Recurse -Force $tplPath
+    Write-Host "Deleted template '$TPL_NAME'"
+}
+
+# ─── Status command ───────────────────────────────────────────────────────────
+
+function Invoke-StatusProfiles {
+    if (!(Test-Path $BASE)) {
+        Write-Host "No profiles found."
+        return
+    }
+
+    Write-Host ("{0,-16} {1,-10} {2,-12} {3,-20} {4}" -f "PROFILE", "STATUS", "TYPE", "LAST USED", "SIZE")
+    Write-Host ("{0,-16} {1,-10} {2,-12} {3,-20} {4}" -f "-------", "------", "----", "---------", "----")
+
+    $profiles = Get-ChildItem -Directory -Path $BASE -ErrorAction SilentlyContinue
+    foreach ($p in $profiles) {
+        # Skip .templates directory
+        if ($p.Name -eq ".templates") { continue }
+
+        # Check if running
+        $status = "stopped"
+        $dataDir = "$($p.FullName)\AppData\Roaming\Antigravity"
+        $procs = Get-Process -Name "Antigravity" -ErrorAction SilentlyContinue
+        if ($procs) {
+            foreach ($proc in $procs) {
+                try {
+                    $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $($proc.Id)" -ErrorAction SilentlyContinue).CommandLine
+                    if ($cmdLine -and $cmdLine -like "*$($p.Name)*") {
+                        $status = "running"
+                        break
+                    }
+                } catch { }
+            }
+        }
+
+        # Type
+        $ptype = "full"
+        if (Test-Path "$($p.FullName)\.auth-only") {
+            $ptype = "auth-only"
+        }
+
+        # Last used
+        $lastUsed = $p.LastWriteTime.ToString("yyyy-MM-dd HH:mm")
+
+        # Size
+        $size = Get-FolderSize $p.FullName
+
+        # Color for running
+        if ($status -eq "running") {
+            Write-Host ("{0,-16} " -f $p.Name) -NoNewline
+            Write-Host ("{0,-10} " -f $status) -NoNewline -ForegroundColor Green
+            Write-Host ("{0,-12} {1,-20} {2}" -f $ptype, $lastUsed, $size)
+        } else {
+            Write-Host ("{0,-16} {1,-10} {2,-12} {3,-20} {4}" -f $p.Name, $status, $ptype, $lastUsed, $size)
+        }
+    }
+}
+
+# ─── Export / Import ──────────────────────────────────────────────────────────
+
+function Invoke-ExportProfile {
+    param($PROFILE, $OutputPath)
+    Validate-Name $PROFILE
+
+    $PROFILE_DIR = "$BASE\$PROFILE"
+    if (!(Test-Path $PROFILE_DIR)) {
+        Write-Error "Error: profile '$PROFILE' does not exist"
+        exit 1
+    }
+
+    if ([string]::IsNullOrWhiteSpace($OutputPath)) {
+        $OutputPath = ".\$PROFILE.zip"
+    }
+
+    Write-Host "Exporting profile '$PROFILE'..."
+    Compress-Archive -Path $PROFILE_DIR -DestinationPath $OutputPath -Force
+    Write-Host "Exported to $OutputPath"
+}
+
+function Invoke-ImportProfile {
+    param($ArchivePath, $PROFILE)
+
+    if ([string]::IsNullOrWhiteSpace($ArchivePath)) {
+        Write-Error "Error: usage: multigravity import <archive> [profile-name]"
+        exit 1
+    }
+
+    if (!(Test-Path $ArchivePath)) {
+        Write-Error "Error: file '$ArchivePath' not found"
+        exit 1
+    }
+
+    # Auto-detect profile name from archive if not provided
+    if ([string]::IsNullOrWhiteSpace($PROFILE)) {
+        $PROFILE = [System.IO.Path]::GetFileNameWithoutExtension($ArchivePath)
+    }
+
+    Validate-Name $PROFILE
+
+    $PROFILE_DIR = "$BASE\$PROFILE"
+    if (Test-Path $PROFILE_DIR) {
+        Write-Error "Error: profile '$PROFILE' already exists"
+        exit 1
+    }
+
+    New-Item -ItemType Directory -Force -Path $BASE | Out-Null
+
+    Write-Host "Importing profile as '$PROFILE'..."
+
+    # Extract to temp, then move to correct name
+    $tempDir = "$BASE\_import_temp_$(Get-Random)"
+    Expand-Archive -Path $ArchivePath -DestinationPath $tempDir -Force
+
+    $extracted = Get-ChildItem -Directory -Path $tempDir
+    if ($extracted.Count -eq 1) {
+        # Archive had a single root dir — move it
+        Move-Item -Path $extracted[0].FullName -Destination $PROFILE_DIR
+        Remove-Item $tempDir -Recurse -Force
+    } else {
+        # Archive had loose files — rename temp dir
+        Rename-Item -Path $tempDir -NewName $PROFILE
+    }
+
+    Invoke-CreateShortcut $PROFILE
+    Write-Host "Imported profile '$PROFILE'"
+}
+
 switch ($cmd) {
     "new" {
-        Invoke-NewProfile $arg1
+        $extraArgs = @()
+        if ($arg2) { $extraArgs += $arg2 }
+        if ($ForwardArgs) { $extraArgs += $ForwardArgs }
+        Invoke-NewProfile $arg1 $extraArgs
     }
     "list" {
         Invoke-ListProfiles
+    }
+    "status" {
+        Invoke-StatusProfiles
     }
     "rename" {
         Invoke-RenameProfile $arg1 $arg2
@@ -399,6 +699,23 @@ switch ($cmd) {
     }
     "clone" {
         Invoke-CloneProfile $arg1 $arg2
+    }
+    "template" {
+        switch ($arg1) {
+            "save" { Invoke-TemplateSave $arg2 $ForwardArgs[0] }
+            "list" { Invoke-TemplateList }
+            "delete" { Invoke-TemplateDelete $arg2 }
+            default {
+                Write-Error "Error: usage: multigravity template <save|list|delete>"
+                exit 1
+            }
+        }
+    }
+    "export" {
+        Invoke-ExportProfile $arg1 $arg2
+    }
+    "import" {
+        Invoke-ImportProfile $arg1 $arg2
     }
     "update" {
         Invoke-UpdateCli
