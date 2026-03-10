@@ -1,31 +1,26 @@
-# Multigravity Pro
+# multigravity-pro
+
+[![GitHub Repository](https://img.shields.io/badge/GitHub-Repository-blue?logo=github)](https://github.com/Pulkit7070/multigravity-pro)
+[![GitHub Profile](https://img.shields.io/badge/GitHub-Profile-blue?logo=github)](https://github.com/Pulkit7070)
+![Stars](https://img.shields.io/github/stars/Pulkit7070/multigravity-pro?style=social)
+
+<img src="assets/multigravity-logo.jpg" alt="Multigravity" width="80">
+
+## Multigravity
 
 **Run multiple Antigravity IDE profiles at the same time — each with its own accounts, settings, and extensions.**
 
 No more logging in and out. Just switch profiles instantly or use them all at once.
 
-> Built on top of [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) by [Sujit Agarwal](https://github.com/sujitagarwal). Original Windows support by [Samin Yeasar](https://github.com/Solez-ai), Linux support by [Md Rayyan Nawaz](https://github.com/therayyanawaz).
-
 > Supported OS: macOS, Windows, and Linux.
-
----
-
-## What's new in Pro
-
-| Feature | Command | What it does |
-|---|---|---|
-| Auth-only profiles | `new work --auth-only` | Share extensions & settings across profiles, isolate only the login. Near-zero disk usage. |
-| Profile templates | `template save work py-dev` | Save a configured profile as a reusable starting point. `new x --from py-dev` to stamp out copies. |
-| Status dashboard | `status` | See which profiles are running, their type, last used time, and disk size — at a glance. |
-| Export / Import | `export work ./work.zip` | Pack a profile into one portable file. Move between machines, share with teammates, back up. |
-
-Everything from the original multigravity-cli still works — `new`, `list`, `clone`, `rename`, `delete`, `doctor`, `stats`, `update`, `completion`.
 
 ---
 
 ## Install
 
 ### macOS / Linux
+
+Open your terminal and paste this:
 
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.sh)"
@@ -39,26 +34,36 @@ Open **PowerShell** and paste:
 irm https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.ps1 | iex
 ```
 
+That's it. Multigravity is now installed.
+
 ---
 
-## Quick Start
+## Getting Started
 
-### Create a profile
+### 1. Create a profile
+
+Give it any name you like — your name, a project, a client, anything:
 
 ```bash
 multigravity new work
 multigravity new personal
 ```
 
-This creates the profile + a clickable launcher (macOS app, Windows Start Menu shortcut, or Linux .desktop file).
+This also creates a clickable launcher:
 
-### Launch a profile
+- macOS: `~/Applications/Multigravity <name>.app`
+- Windows: **Start Menu** shortcut
+- Linux: `~/.local/share/applications/multigravity-<name>.desktop`
+
+### 2. Open a profile
 
 ```bash
 multigravity work
 ```
 
-Antigravity opens with that profile's isolated settings, accounts, and extensions. Pass any Antigravity args through:
+Antigravity will open using that profile's isolated settings, accounts, and extensions.
+
+You can also pass normal Antigravity arguments through:
 
 ```bash
 multigravity work --new-window
@@ -77,7 +82,12 @@ multigravity new client-a --auth-only
 multigravity new client-b --auth-only
 ```
 
-Full profile = ~500MB each. Auth-only = near zero.
+|  | Full Profile | Auth-Only |
+|---|---|---|
+| Extensions | Separate copy | Shared (symlink) |
+| Settings | Separate copy | Shared (symlink) |
+| Account / Auth | Isolated | Isolated |
+| Disk usage | ~500 MB | ~2 MB |
 
 ---
 
@@ -169,9 +179,22 @@ multigravity help
 
 ---
 
+## What's New in Pro
+
+| Feature | Command | What it does |
+|---|---|---|
+| Auth-only profiles | `new work --auth-only` | Share extensions and settings across profiles, isolate only the login. Near-zero disk usage. |
+| Profile templates | `template save work py-dev` | Save a configured profile as a reusable starting point. `new x --from py-dev` to stamp out copies. |
+| Status dashboard | `status` | See which profiles are running, their type, last used time, and disk size — at a glance. |
+| Export / Import | `export work ./work.zip` | Pack a profile into one portable file. Move between machines, share with teammates, back up. |
+
+Everything from the original [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) still works — `new`, `list`, `clone`, `rename`, `delete`, `doctor`, `stats`, `update`, `completion`.
+
+---
+
 ## Credits
 
-Multigravity Pro is a fork of [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) by [Sujit Agarwal](https://github.com/sujitagarwal) with added features for auth-only profiles, templates, status dashboard, and export/import.
+Multigravity Pro is built on top of [multigravity-cli](https://github.com/sujitagarwal/multigravity-cli) by [Sujit Agarwal](https://github.com/sujitagarwal).
 
 - Original project: [sujitagarwal/multigravity-cli](https://github.com/sujitagarwal/multigravity-cli)
 - Windows support: [Samin Yeasar](https://github.com/Solez-ai)
