@@ -1,0 +1,804 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+shopt -s nullglob
+
+BASE="${MULTIGRAVITY_HOME:-$HOME/AntigravityProfiles}"
+cmd="${1-}"
+
+abort() {
+  echo "Error: $1" >&2
+  exit 1
+}
+
+print_info() {
+  echo "$1"
+}
+
+platform() {
+  local raw
+  raw="${MULTIGRAVITY_PLATFORM-}"
+  if [ -z "$raw" ]; then
+    raw="$(uname -s)"
+  fi
+
+  raw="$(printf '%s' "$raw" | tr '[:upper:]' '[:lower:]')"
+
+  case "$raw" in
+    darwin | macos | mac | osx)
+      printf '%s\n' "darwin"
+      ;;
+    linux)
+      printf '%s\n' "linux"
+      ;;
+    *)
+      abort "unsupported platform '$raw'. Multigravity supports macOS and Linux."
+      ;;
+  esac
+}
+
+profile_dir() {
+  printf '%s/%s\n' "$BASE" "$1"
+}
+
+user_data_dir() {
+  local profile_path=$1
+
+  case "$(platform)" in
+    darwin)
+      printf '%s/Library/Application Support/Antigravity\n' "$profile_path"
+      ;;
+    linux)
+      printf '%s/.config/Antigravity\n' "$profile_path"
+      ;;
+  esac
+}
+
+extensions_dir() {
+  local profile_path=$1
+  printf '%s/.antigravity/extensions\n' "$profile_path"
+}
+
+linux_launcher_dir() {
+  printf '%s/.local/share/multigravity/launchers\n' "$HOME"
+}
+
+linux_launcher_path() {
+  printf '%s/%s.sh\n' "$(linux_launcher_dir)" "$1"
+}
+
+linux_desktop_path() {
+  printf '%s/.local/share/applications/multigravity-%s.desktop\n' "$HOME" "$1"
+}
+
+mac_shortcut_path() {
+  printf '%s/Applications/Multigravity %s.app\n' "$HOME" "$1"
+}
+
+validate_name() {
+  local name=$1
+
+  if [[ -z "$name" ]]; then
+    abort "profile name required"
+  fi
+
+  if ! [[ "$name" =~ ^[a-zA-Z0-9][a-zA-Z0-9-]*$ ]]; then
+    abort "profile name must start with alphanumeric and contain only letters, numbers, or hyphens"
+  fi
+}
+
+command_or_path() {
+  local candidate=$1
+
+  if [ -z "$candidate" ]; then
+    return 1
+  fi
+
+  if [ -d "$candidate" ] || [ -x "$candidate" ]; then
+    printf '%s\n' "$candidate"
+    return 0
+  fi
+
+  if command -v "$candidate" >/dev/null 2>&1; then
+    command -v "$candidate"
+    return 0
+  fi
+
+  return 1
+}
+
+find_app() {
+  local override candidate
+
+  override="${MULTIGRAVITY_APP-}"
+  if [ -n "$override" ] && command_or_path "$override" >/dev/null 2>&1; then
+    command_or_path "$override"
+    return 0
+  fi
+
+  case "$(platform)" in
+    darwin)
+      for candidate in \
+        "/Applications/Antigravity.app" \
+        "$HOME/Applications/Antigravity.app"
+      do
+        if [ -d "$candidate" ]; then
+          printf '%s\n' "$candidate"
+          return 0
+        fi
+      done
+      ;;
+    linux)
+      for candidate in \
+        "antigravity" \
+        "/usr/share/antigravity/antigravity" \
+        "/usr/bin/antigravity" \
+        "/usr/local/bin/antigravity" \
+        "$HOME/.local/bin/antigravity" \
+        "$HOME/Applications/Antigravity.AppImage"
+      do
+        if command_or_path "$candidate" >/dev/null 2>&1; then
+          command_or_path "$candidate"
+          return 0
+        fi
+      done
+      ;;
+  esac
+
+  return 1
+}
+
+require_app() {
+  local app
+
+  if ! app="$(find_app)"; then
+    case "$(platform)" in
+      darwin)
+        abort "Antigravity.app was not found. Install Antigravity or set MULTIGRAVITY_APP to the app bundle path."
+        ;;
+      linux)
+        abort "Antigravity was not found. Install the Linux app so 'antigravity' is on PATH, or set MULTIGRAVITY_APP to the executable path."
+        ;;
+    esac
+  fi
+
+  printf '%s\n' "$app"
+}
+
+create_profile_layout() {
+  local profile_path=$1
+
+  mkdir -p "$profile_path"
+  mkdir -p "$(extensions_dir "$profile_path")"
+
+  case "$(platform)" in
+    darwin)
+      mkdir -p "$profile_path/Library/Application Support"
+
+      if [ ! -e "$profile_path/Library/Keychains" ] && [ -d "$HOME/Library/Keychains" ]; then
+        ln -s "$HOME/Library/Keychains" "$profile_path/Library/Keychains"
+      fi
+      ;;
+    linux)
+      mkdir -p \
+        "$profile_path/.config/Antigravity" \
+        "$profile_path/.cache" \
+        "$profile_path/.local/share" \
+        "$profile_path/.local/state"
+      ;;
+  esac
+}
+
+script_path() {
+  local installed dir
+
+  installed="$(command -v multigravity 2>/dev/null || true)"
+  if [ -n "$installed" ]; then
+    printf '%s\n' "$installed"
+    return 0
+  fi
+
+  dir="$(cd "$(dirname "$0")" && pwd)"
+  printf '%s/%s\n' "$dir" "$(basename "$0")"
+}
+
+shell_quote() {
+  printf '%q' "$1"
+}
+
+desktop_quote() {
+  local value=$1
+
+  value=${value//\\/\\\\}
+  value=${value//\"/\\\"}
+  value=${value//\$/\\$}
+  value=${value//\`/\\\`}
+  printf '"%s"' "$value"
+}
+
+create_shortcut_darwin() {
+  local profile=$1
+  local app_name="Multigravity $profile"
+  local app_dir
+  local run_script
+  local launcher
+  local icon_src
+
+  app_dir="$(mac_shortcut_path "$profile")"
+  run_script="$app_dir/Contents/MacOS/run"
+  launcher="$(script_path)"
+  icon_src="$(dirname "$launcher")/icon.icns"
+
+  mkdir -p "$app_dir/Contents/MacOS"
+  mkdir -p "$app_dir/Contents/Resources"
+
+  cat <<EOF > "$run_script"
+#!/usr/bin/env bash
+export MULTIGRAVITY_HOME=$(shell_quote "$BASE")
+exec $(shell_quote "$launcher") $(shell_quote "$profile") "\$@"
+EOF
+
+  chmod +x "$run_script"
+
+  if [ -f "$icon_src" ]; then
+    cp "$icon_src" "$app_dir/Contents/Resources/icon.icns"
+  fi
+
+  cat <<EOF > "$app_dir/Contents/Info.plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+"http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleExecutable</key>
+  <string>run</string>
+  <key>CFBundleIconFile</key>
+  <string>icon</string>
+  <key>CFBundleIdentifier</key>
+  <string>com.multigravity.profile.$profile</string>
+  <key>CFBundleName</key>
+  <string>$app_name</string>
+  <key>CFBundlePackageType</key>
+  <string>APPL</string>
+</dict>
+</plist>
+EOF
+
+  print_info "Shortcut created: $app_dir"
+}
+
+create_shortcut_linux() {
+  local profile=$1
+  local launcher_root
+  local launcher_path
+  local desktop_path
+  local launcher
+
+  launcher_root="$(linux_launcher_dir)"
+  launcher_path="$(linux_launcher_path "$profile")"
+  desktop_path="$(linux_desktop_path "$profile")"
+  launcher="$(script_path)"
+
+  mkdir -p "$launcher_root"
+  mkdir -p "$(dirname "$desktop_path")"
+
+  cat <<EOF > "$launcher_path"
+#!/usr/bin/env sh
+export MULTIGRAVITY_HOME=$(shell_quote "$BASE")
+exec $(shell_quote "$launcher") $(shell_quote "$profile") "\$@"
+EOF
+
+  chmod +x "$launcher_path"
+
+  cat <<EOF > "$desktop_path"
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Multigravity $profile
+Comment=Launch the $profile Antigravity profile
+Exec=$(desktop_quote "$launcher_path") %F
+Icon=antigravity
+Terminal=false
+StartupNotify=false
+StartupWMClass=Antigravity
+Categories=TextEditor;Development;IDE;
+MimeType=application/x-antigravity-workspace;
+EOF
+
+  print_info "Shortcut created: $desktop_path"
+}
+
+create_shortcut() {
+  case "$(platform)" in
+    darwin)
+      create_shortcut_darwin "$1"
+      ;;
+    linux)
+      create_shortcut_linux "$1"
+      ;;
+  esac
+}
+
+remove_shortcut() {
+  local profile=$1
+  local target
+
+  case "$(platform)" in
+    darwin)
+      target="$(mac_shortcut_path "$profile")"
+      if [ -d "$target" ]; then
+        rm -rf "$target"
+        print_info "Removed shortcut: $target"
+      fi
+      ;;
+    linux)
+      target="$(linux_launcher_path "$profile")"
+      if [ -f "$target" ]; then
+        rm -f "$target"
+        print_info "Removed shortcut: $target"
+      fi
+
+      target="$(linux_desktop_path "$profile")"
+      if [ -f "$target" ]; then
+        rm -f "$target"
+        print_info "Removed shortcut: $target"
+      fi
+      ;;
+  esac
+}
+
+launch_profile() {
+  local profile=$1
+  shift || true
+
+  local profile_path
+  local app
+  local data_dir
+  local ext_dir
+
+  profile_path="$(profile_dir "$profile")"
+  if [ ! -d "$profile_path" ]; then
+    abort "profile '$profile' does not exist. Run: multigravity new $profile"
+  fi
+
+  create_profile_layout "$profile_path"
+
+  app="$(require_app)"
+  data_dir="$(user_data_dir "$profile_path")"
+  ext_dir="$(extensions_dir "$profile_path")"
+
+  print_info "Launching Antigravity profile '$profile'"
+
+  case "$(platform)" in
+    darwin)
+      HOME="$profile_path" open -n "$app" --args \
+        --user-data-dir "$data_dir" \
+        --extensions-dir "$ext_dir" \
+        "$@"
+      ;;
+    linux)
+      HOME="$profile_path" \
+      XDG_CONFIG_HOME="$profile_path/.config" \
+      XDG_CACHE_HOME="$profile_path/.cache" \
+      XDG_DATA_HOME="$profile_path/.local/share" \
+      XDG_STATE_HOME="$profile_path/.local/state" \
+      "$app" \
+        --user-data-dir "$data_dir" \
+        --extensions-dir "$ext_dir" \
+        "$@"
+      ;;
+  esac
+}
+
+list_profiles() {
+  local entries=""
+  local dir
+  local raw=${1-}
+
+  if [ "$raw" != "--raw" ]; then
+    echo "Existing profiles:"
+  fi
+
+  if [ ! -d "$BASE" ]; then
+    if [ "$raw" != "--raw" ]; then
+      echo "(none)"
+    fi
+    return 0
+  fi
+
+  for dir in "$BASE"/*; do
+    [ -d "$dir" ] || continue
+    entries="${entries}$(basename "$dir")"$'\n'
+  done
+
+  if [ -z "$entries" ]; then
+    if [ "$raw" != "--raw" ]; then
+      echo "(none)"
+    fi
+  else
+    printf '%s' "$entries" | sort
+  fi
+}
+
+new_profile() {
+  local profile=$1
+  local profile_path
+
+  validate_name "$profile"
+
+  profile_path="$(profile_dir "$profile")"
+  if [ -d "$profile_path" ]; then
+    abort "profile '$profile' already exists"
+  fi
+
+  mkdir -p "$BASE"
+  create_profile_layout "$profile_path"
+
+  print_info "Created profile '$profile'"
+  create_shortcut "$profile"
+}
+
+delete_profile() {
+  local profile=$1
+  local profile_path
+  local confirm
+
+  validate_name "$profile"
+
+  profile_path="$(profile_dir "$profile")"
+  if [ ! -d "$profile_path" ]; then
+    abort "profile '$profile' does not exist"
+  fi
+
+  read -r -p "Delete profile '$profile' and all its data? [y/N] " confirm
+  if [[ "$confirm" =~ ^[Yy]$ ]]; then
+    rm -rf "$profile_path"
+    remove_shortcut "$profile"
+    print_info "Deleted profile '$profile'"
+  else
+    print_info "Aborted."
+  fi
+}
+
+rename_profile() {
+  local old=$1
+  local new=$2
+  local old_path
+  local new_path
+
+  validate_name "$old"
+  validate_name "$new"
+
+  old_path="$(profile_dir "$old")"
+  new_path="$(profile_dir "$new")"
+
+  if [ ! -d "$old_path" ]; then
+    abort "profile '$old' does not exist"
+  fi
+  if [ -d "$new_path" ]; then
+    abort "profile '$new' already exists"
+  fi
+
+  mv "$old_path" "$new_path"
+  remove_shortcut "$old"
+  create_shortcut "$new"
+
+  print_info "Renamed profile '$old' to '$new'"
+}
+
+clone_profile() {
+  local src=$1
+  local dest=$2
+  local src_path
+  local dest_path
+
+  validate_name "$src"
+  validate_name "$dest"
+
+  src_path="$(profile_dir "$src")"
+  dest_path="$(profile_dir "$dest")"
+
+  if [ ! -d "$src_path" ]; then
+    abort "source profile '$src' does not exist"
+  fi
+  if [ -d "$dest_path" ]; then
+    abort "destination profile '$dest' already exists"
+  fi
+
+  print_info "Cloning profile '$src' to '$dest'..."
+  cp -R "$src_path" "$dest_path"
+  create_shortcut "$dest"
+
+  print_info "Successfully cloned '$src' to '$dest'"
+}
+
+doctor_cli() {
+  local errors=0
+  local warnings=0
+
+  print_info "Checking multigravity environment..."
+
+  # 1. Platform Check
+  if platform &>/dev/null; then
+    echo "  [✓] Platform: $(platform)"
+  else
+    echo "  [✗] Platform: Unknown"
+    errors=$((errors + 1))
+  fi
+
+  # 2. Antigravity Installation
+  if app=$(find_app); then
+    echo "  [✓] Antigravity: Found at $app"
+  else
+    echo "  [✗] Antigravity: Not found. Ensure it is installed or set MULTIGRAVITY_APP."
+    errors=$((errors + 1))
+  fi
+
+  # 3. Path Check
+  local installed
+  installed="$(command -v multigravity 2>/dev/null || true)"
+  if [ -n "$installed" ]; then
+    echo "  [✓] Global Binary: $installed"
+  else
+    echo "  [!] Global Binary: Not found in PATH. Run install script or update PATH."
+    warnings=$((warnings + 1))
+  fi
+
+  # 4. Icon Check (macOS)
+  if [ "$(platform)" = "darwin" ]; then
+    local icon_path
+    icon_path="$(dirname "$(script_path)")/icon.icns"
+    if [ -f "$icon_path" ]; then
+      echo "  [✓] Application Icon: Found"
+    else
+      echo "  [!] Application Icon: Missing ($icon_path). Shortcuts will have default icons."
+      warnings=$((warnings + 1))
+    fi
+  fi
+
+  # 5. Base Directory
+  if [ -d "$BASE" ]; then
+    if [ -w "$BASE" ]; then
+      echo "  [✓] Profile storage: $BASE (writable)"
+    else
+      echo "  [✗] Profile storage: $BASE (NOT writable)"
+      errors=$((errors + 1))
+    fi
+  else
+    echo "  [!] Profile storage: $BASE (Not yet created)"
+  fi
+
+  echo ""
+  if [ $errors -eq 0 ]; then
+    if [ $warnings -eq 0 ]; then
+      print_info "✓ Your environment looks perfect!"
+    else
+      print_info "Found $warnings warning(s). Multigravity should still work, but some features might be degraded."
+    fi
+  else
+    print_info "✗ Found $errors error(s) and $warnings warning(s). Please fix the errors above."
+  fi
+}
+
+profile_stats() {
+  if [ ! -d "$BASE" ]; then
+    print_info "No profiles found."
+    return 0
+  fi
+
+  print_info "Profile Storage Usage:"
+  printf "%-20s %-10s %-10s\n" "PROFILE" "SIZE" "EXTENSIONS"
+  printf "%-20s %-10s %-10s\n" "-------" "----" "----------"
+
+  local dir
+  for dir in "$BASE"/*; do
+    [ -d "$dir" ] || continue
+    local name
+    name=$(basename "$dir")
+    
+    local size
+    if [ "$(uname -s)" = "Darwin" ]; then
+      size=$(du -sh "$dir" | cut -f1)
+    else
+      size=$(du -sh "$dir" | cut -f1)
+    fi
+
+    local ext_count
+    ext_count=$(ls -1 "$(extensions_dir "$dir")" 2>/dev/null | wc -l | xargs)
+    [ -z "$ext_count" ] && ext_count=0
+
+    printf "%-20s %-10s %-10s\n" "$name" "$size" "$ext_count"
+  done
+
+  echo ""
+  local total
+  total=$(du -sh "$BASE" | cut -f1)
+  print_info "Total usage: $total"
+}
+
+update_cli() {
+  local script_url="https://raw.githubusercontent.com/sujitagarwal/multigravity-cli/main/multigravity"
+  local target
+  target="$(script_path)"
+
+  if [ -z "$target" ]; then
+    abort "could not determine script path for update"
+  fi
+
+  print_info "Updating multigravity from $script_url ..."
+  if curl -fsSL "$script_url" -o "$target.tmp"; then
+    mv "$target.tmp" "$target"
+    chmod +x "$target"
+    print_info "Successfully updated multigravity!"
+  else
+    rm -f "$target.tmp"
+    abort "failed to download update"
+  fi
+}
+
+help_completion() {
+  local shell_name
+  shell_name="$(basename "$SHELL")"
+
+  echo "To enable autocompletion, add the following to your shell profile:"
+  echo ""
+  case "$shell_name" in
+    zsh)
+      echo "  # Add to ~/.zshrc"
+      echo '  source <(multigravity completion zsh)'
+      ;;
+    bash)
+      echo "  # Add to ~/.bashrc"
+      echo '  source <(multigravity completion bash)'
+      ;;
+    *)
+      echo "  # Your shell ($shell_name) is not natively supported for completion."
+      ;;
+  esac
+  echo ""
+  echo "Then restart your terminal or run: source ~/.$shell_name""rc"
+}
+
+generate_completion() {
+  local shell_type=$1
+  case "$shell_type" in
+    zsh)
+      cat <<'EOF'
+#compdef multigravity
+_multigravity() {
+    local -a commands
+    commands=(
+        'new:Create a new profile'
+        'list:List existing profiles'
+        'rename:Rename a profile'
+        'delete:Delete a profile'
+        'clone:Clone an existing profile'
+        'update:Update multigravity'
+        'doctor:Run system diagnosis'
+        'stats:Show profile storage usage'
+        'completion:Setup shell completion'
+        'help:Show help'
+    )
+    local curcontext="$curcontext" state line
+    _arguments -C '1: :->command' '*: :->args'
+    case $state in
+        command)
+            _describe -t commands 'multigravity command' commands
+            local -a profiles
+            profiles=($(multigravity list --raw 2>/dev/null))
+            (( ${#profiles} > 0 )) && _describe -t profiles 'profile' profiles
+            ;;
+        args)
+            case $line[1] in
+                rename|delete|clone|help)
+                    local -a profiles
+                    profiles=($(multigravity list --raw 2>/dev/null))
+                    (( ${#profiles} > 0 )) && _describe -t profiles 'profile' profiles
+                    ;;
+            esac
+            ;;
+    esac
+}
+_multigravity "$@"
+EOF
+      ;;
+    bash)
+      cat <<'EOF'
+_multigravity_completions() {
+    local cur prev opts
+    COMPREPLY=()
+    cur="${COMP_WORDS[COMP_CWORD]}"
+    prev="${COMP_WORDS[COMP_CWORD-1]}"
+    opts="new list rename delete clone update doctor stats completion help"
+ pocket
+
+    if [[ ${COMP_CWORD} -eq 1 ]] ; then
+        local profiles=$(multigravity list --raw 2>/dev/null)
+        COMPREPLY=( $(compgen -W "${opts} ${profiles}" -- ${cur}) )
+        return 0
+    fi
+
+    case "${prev}" in
+        delete|rename|clone)
+            local profiles=$(multigravity list --raw 2>/dev/null)
+            COMPREPLY=( $(compgen -W "${profiles}" -- ${cur}) )
+            return 0
+            ;;
+    esac
+}
+complete -F _multigravity_completions multigravity
+EOF
+      ;;
+  esac
+}
+
+
+
+usage() {
+  cat <<EOF
+Usage: multigravity <command> [args]
+
+Commands:
+  new <name>            Create a new named profile + desktop shortcut
+  list                  List existing profiles
+  rename <old> <new>    Rename a profile (updates its shortcut)
+  delete <name>         Delete a profile and its data
+  clone <src> <dest>    Clone an existing profile
+  update                Update multigravity to the latest version
+  doctor                Run a system diagnosis
+  stats                 Show storage usage per profile
+  completion            Show setup instructions for shell completion
+  <name> [args...]      Launch Antigravity with the given profile
+  help                  Show this help
+
+Profile names: alphanumeric and hyphens only (e.g. work, personal, test-1)
+
+Environment:
+  MULTIGRAVITY_APP      Override the Antigravity app path or command
+  MULTIGRAVITY_HOME     Override the profile storage directory
+EOF
+}
+
+case "$cmd" in
+  new)
+    new_profile "${2-}"
+    ;;
+  list)
+    list_profiles "${2-}"
+    ;;
+  rename)
+    rename_profile "${2-}" "${3-}"
+    ;;
+  delete)
+    delete_profile "${2-}"
+    ;;
+  clone)
+    clone_profile "${2-}" "${3-}"
+    ;;
+  update)
+    update_cli
+    ;;
+  doctor)
+    doctor_cli
+    ;;
+  stats)
+    profile_stats
+    ;;
+  completion)
+    if [ -n "${2-}" ]; then
+      generate_completion "$2"
+    else
+      help_completion
+    fi
+    ;;
+  help | --help | -h)
+    usage
+    ;;
+  "")
+    usage
+    exit 1
+    ;;
+  *)
+    launch_profile "$cmd" "${@:2}"
+    ;;
+esac
