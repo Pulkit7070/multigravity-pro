@@ -438,7 +438,8 @@ function Invoke-DoctorCli {
 }
 
 function Invoke-UpdateCli {
-    $script_url = "https://raw.githubusercontent.com/sujitagarwal/multigravity-cli/main/multigravity.ps1"
+    $script_url = "https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/multigravity.ps1"
+    $checksum_url = "https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/multigravity.ps1.sha256"
     $target = $MyInvocation.MyCommand.Path
     if ([string]::IsNullOrEmpty($target)) {
         $cmdObj = Get-Command multigravity -ErrorAction SilentlyContinue
@@ -452,11 +453,41 @@ function Invoke-UpdateCli {
 
     Write-Host "Updating multigravity from $script_url ..."
     try {
-        $result = Invoke-WebRequest -Uri $script_url -UseBasicParsing -ErrorAction Stop
-        [System.IO.File]::WriteAllText($target, $result.Content, [System.Text.Encoding]::UTF8)
+        $tmp = "$target.tmp"
+        $checksumTmp = "$target.tmp.sha256"
+        $backup = "$target.bak"
+
+        Invoke-WebRequest -Uri $script_url -OutFile $tmp -UseBasicParsing -ErrorAction Stop
+        Invoke-WebRequest -Uri $checksum_url -OutFile $checksumTmp -UseBasicParsing -ErrorAction Stop
+
+        $expectedLine = Get-Content -Path $checksumTmp -TotalCount 1 -ErrorAction Stop
+        $expected = (($expectedLine -split '\s+')[0]).Trim()
+        if ([string]::IsNullOrWhiteSpace($expected)) {
+            throw "Invalid checksum file format."
+        }
+
+        $actual = (Get-FileHash -Algorithm SHA256 -Path $tmp -ErrorAction Stop).Hash.ToLowerInvariant()
+        if ($actual -ne $expected.ToLowerInvariant()) {
+            throw "Checksum verification failed."
+        }
+
+        if (Test-Path $target) {
+            Copy-Item -Path $target -Destination $backup -Force
+        }
+
+        $content = Get-Content -Path $tmp -Raw -ErrorAction Stop
+        [System.IO.File]::WriteAllText($target, $content, [System.Text.Encoding]::UTF8)
+        if (Test-Path $backup) { Remove-Item -Force $backup }
+        if (Test-Path $tmp) { Remove-Item -Force $tmp }
+        if (Test-Path $checksumTmp) { Remove-Item -Force $checksumTmp }
         Write-Host "Successfully updated multigravity!"
     } catch {
-        Write-Error "Error: failed to download update: $_"
+        if (Test-Path "$target.bak") {
+            Move-Item -Path "$target.bak" -Destination $target -Force
+        }
+        if (Test-Path "$target.tmp") { Remove-Item -Force "$target.tmp" -ErrorAction SilentlyContinue }
+        if (Test-Path "$target.tmp.sha256") { Remove-Item -Force "$target.tmp.sha256" -ErrorAction SilentlyContinue }
+        Write-Error "Error: update failed: $_"
         exit 1
     }
 }
