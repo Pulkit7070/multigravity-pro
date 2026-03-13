@@ -43,6 +43,51 @@ install_with_backup() {
   abort "failed to install $dest and previous version was restored"
 }
 
+append_path_export() {
+  local rc_file=$1
+  local export_line='export PATH="$HOME/.local/bin:$PATH"'
+
+  [ -f "$rc_file" ] || touch "$rc_file"
+  if grep -Fq "$export_line" "$rc_file"; then
+    return 0
+  fi
+
+  {
+    echo ""
+    echo "# Added by Multigravity installer"
+    echo "$export_line"
+  } >> "$rc_file"
+}
+
+offer_path_update() {
+  local shell_name rc_file
+  shell_name="$(basename "${SHELL:-}")"
+
+  case "$shell_name" in
+    zsh) rc_file="$HOME/.zshrc" ;;
+    bash) rc_file="$HOME/.bashrc" ;;
+    *) rc_file="$HOME/.profile" ;;
+  esac
+
+  echo ""
+  echo "$INSTALL_DIR is not in your PATH."
+  if [ -t 0 ]; then
+    read -r -p "Add it automatically to $rc_file? (y/n) " reply
+    if [[ "$reply" =~ ^[Yy]$ ]]; then
+      append_path_export "$rc_file"
+      print_step "Added PATH export to $rc_file"
+      print_step "Restart your terminal or run: export PATH=\"\$HOME/.local/bin:\$PATH\""
+    else
+      echo "Add this manually to your shell profile:"
+      echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+    fi
+  else
+    echo "Add this to your shell profile:"
+    echo "  export PATH=\"\$HOME/.local/bin:\$PATH\""
+  fi
+  echo ""
+}
+
 # ── platform ─────────────────────────────────────────────────────────────────
 case "$(uname -s)" in
   Darwin)
@@ -63,12 +108,8 @@ command -v curl &>/dev/null || abort "curl is required but not found"
 if [ ! -w "$INSTALL_DIR" ]; then
   INSTALL_DIR="$HOME/.local/bin"
   mkdir -p "$INSTALL_DIR"
-  # warn if not in PATH
   if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
-    echo "Warning: $INSTALL_DIR is not in your PATH."
-    echo "  Add this to your shell profile (~/.zshrc or ~/.bashrc):"
-    echo "    export PATH=\"\$HOME/.local/bin:\$PATH\""
-    echo ""
+    offer_path_update
   fi
 fi
 
