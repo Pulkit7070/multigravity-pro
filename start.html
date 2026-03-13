@@ -1,0 +1,1524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Get Started  Multigravity Pro</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Noto Sans", Helvetica, Arial, sans-serif;
+      color: #24292f;
+      background: #fff;
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    a { color: #0969da; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* Nav */
+    .nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid #d1d9e0;
+      padding: 12px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .nav-brand {
+      font-weight: 700;
+      font-size: 1.05em;
+      color: #24292f;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-brand img { width: 24px; height: 24px; border-radius: 4px; }
+
+    .nav-links { display: flex; gap: 20px; font-size: 0.9em; }
+    .nav-links a { color: #656d76; font-weight: 500; }
+    .nav-links a:hover { color: #0969da; text-decoration: none; }
+
+    /* Hero */
+    .hero {
+      background: #fff;
+      border-bottom: 1px solid #d1d9e0;
+      padding: 120px 24px 56px;
+      text-align: center;
+    }
+
+    .hero-inner { max-width: 640px; margin: 0 auto; }
+
+    .hero-label {
+      display: inline-block;
+      font-size: 0.78em;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      color: #656d76;
+      margin-bottom: 16px;
+    }
+
+    .hero h1 {
+      font-size: 2.4em;
+      font-weight: 700;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      letter-spacing: -0.3px;
+      color: #24292f;
+    }
+
+    .hero-sub {
+      font-size: 1.05em;
+      color: #656d76;
+      max-width: 520px;
+      margin: 0 auto 32px;
+      line-height: 1.6;
+    }
+
+    .hero-cta {
+      display: inline-block;
+      background: #24292f;
+      color: #fff;
+      padding: 12px 28px;
+      border-radius: 6px;
+      font-size: 0.95em;
+      font-weight: 600;
+      transition: background 0.15s;
+    }
+
+    .hero-cta:hover { background: #32383f; text-decoration: none; }
+
+    /* Sections */
+    section {
+      max-width: 720px;
+      margin: 0 auto;
+      padding: 56px 24px;
+    }
+
+    .section-label {
+      display: block;
+      font-size: 0.75em;
+      font-weight: 700;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #0969da;
+      margin-bottom: 8px;
+    }
+
+    .section-title {
+      font-size: 1.7em;
+      font-weight: 700;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+
+    .section-sub {
+      color: #656d76;
+      font-size: 0.98em;
+      max-width: 560px;
+      margin-bottom: 32px;
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #d1d9e0;
+      margin: 0;
+    }
+
+    /* Explainer cards */
+    .gray-bg { background: #f6f8fa; }
+
+    .cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 16px;
+    }
+
+    .card {
+      background: #fff;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      padding: 20px;
+    }
+
+    .card h3 { font-size: 1em; font-weight: 700; margin-bottom: 6px; }
+    .card p { color: #656d76; font-size: 0.92em; line-height: 1.6; }
+
+    /* Jargon tooltips */
+    .jargon {
+      border-bottom: 1.5px dashed #0969da;
+      cursor: help;
+      color: #0969da;
+      position: relative;
+    }
+
+    .jargon-tip {
+      display: none;
+      position: absolute;
+      bottom: calc(100% + 8px);
+      left: 50%;
+      transform: translateX(-50%);
+      background: #24292f;
+      color: #e6edf3;
+      padding: 10px 14px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      line-height: 1.5;
+      width: 250px;
+      text-align: left;
+      z-index: 50;
+      font-weight: 400;
+    }
+
+    .jargon-tip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: #24292f;
+    }
+
+    .jargon:hover .jargon-tip { display: block; }
+
+    /* Terminal demo */
+    .demo-section {
+      background: #fff;
+      border-bottom: 1px solid #d1d9e0;
+      padding: 56px 24px;
+      text-align: center;
+    }
+
+    .demo-section .section-label { color: #0969da; }
+    .demo-section .section-title { color: #24292f; }
+    .demo-section .section-sub { color: #656d76; margin-left: auto; margin-right: auto; }
+
+    .demo-inner { max-width: 640px; margin: 0 auto; }
+
+    .terminal-window {
+      background: #24292f;
+      border: 1px solid #d1d9e0;
+      border-radius: 8px;
+      overflow: hidden;
+      text-align: left;
+    }
+
+    .terminal-header {
+      background: #1b1f23;
+      padding: 10px 14px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .terminal-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #484f58;
+    }
+
+    .terminal-title {
+      flex: 1;
+      text-align: center;
+      color: #656d76;
+      font-size: 0.8em;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+    }
+
+    .terminal-body {
+      padding: 16px;
+      min-height: 260px;
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+      font-size: 0.85em;
+      line-height: 1.7;
+      color: #e6edf3;
+    }
+
+    .terminal-line { margin-bottom: 2px; }
+    .terminal-prompt { color: #3fb950; }
+    .terminal-command { color: #e6edf3; }
+    .terminal-output { color: #8b949e; }
+    .terminal-success { color: #3fb950; }
+    .terminal-info { color: #58a6ff; }
+    .terminal-cursor {
+      display: inline-block;
+      width: 8px;
+      height: 16px;
+      background: #e6edf3;
+      vertical-align: text-bottom;
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink { 50% { opacity: 0; } }
+
+    .demo-steps {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 24px;
+      flex-wrap: wrap;
+    }
+
+    .demo-step-pill {
+      padding: 5px 14px;
+      border-radius: 4px;
+      font-size: 0.8em;
+      font-weight: 600;
+      color: #656d76;
+      background: #fff;
+      border: 1px solid #d1d9e0;
+      transition: all 0.2s;
+    }
+
+    .demo-step-pill.active {
+      color: #0969da;
+      border-color: #0969da;
+    }
+
+    .demo-step-pill.done {
+      color: #1a7f37;
+      border-color: #1a7f37;
+    }
+
+    .demo-narration {
+      margin-top: 16px;
+      color: #656d76;
+      font-size: 0.92em;
+      min-height: 24px;
+    }
+
+    .demo-controls {
+      margin-top: 16px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .demo-btn {
+      background: #fff;
+      color: #24292f;
+      border: 1px solid #d1d9e0;
+      padding: 8px 20px;
+      border-radius: 6px;
+      font-size: 0.85em;
+      font-weight: 600;
+      cursor: pointer;
+      transition: border-color 0.15s, background 0.15s;
+      font-family: inherit;
+    }
+
+    .demo-btn:hover { background: #f6f8fa; border-color: #bbb; }
+
+    .demo-btn.primary {
+      background: #24292f;
+      color: #fff;
+      border-color: #24292f;
+    }
+
+    .demo-btn.primary:hover { background: #32383f; }
+
+    .demo-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* OS Picker */
+    .os-tabs {
+      display: flex;
+      gap: 0;
+      margin-bottom: 24px;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      overflow: hidden;
+      width: fit-content;
+    }
+
+    .os-tab {
+      padding: 8px 20px;
+      font-size: 0.88em;
+      font-weight: 600;
+      cursor: pointer;
+      background: #f6f8fa;
+      color: #656d76;
+      border: none;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+
+    .os-tab:not(:last-child) { border-right: 1px solid #d1d9e0; }
+    .os-tab.active { background: #0969da; color: #fff; }
+    .os-tab:hover:not(.active) { background: #eef1f5; }
+
+    .os-content { display: none; }
+    .os-content.active { display: block; }
+
+    /* Steps */
+    .step {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 40px;
+      align-items: flex-start;
+    }
+
+    .step-num {
+      flex-shrink: 0;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: #24292f;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.95em;
+      margin-top: 2px;
+    }
+
+    .step-body { flex: 1; }
+    .step-title { font-size: 1.1em; font-weight: 700; margin-bottom: 6px; }
+
+    .step-text {
+      color: #656d76;
+      font-size: 0.95em;
+      margin-bottom: 12px;
+      line-height: 1.7;
+    }
+
+    .step-note {
+      background: #f6f8fa;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.88em;
+      color: #24292f;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    .step-note strong { font-weight: 700; }
+
+    .step-warning {
+      background: #fff8c5;
+      border: 1px solid #d4a72c;
+      border-radius: 6px;
+      padding: 12px 14px;
+      font-size: 0.88em;
+      color: #6a5300;
+      margin-top: 10px;
+      line-height: 1.6;
+    }
+
+    /* Code blocks  match index.html style */
+    .code-block {
+      position: relative;
+      margin: 12px 0;
+    }
+
+    .code-block pre {
+      background: #f6f8fa;
+      border-radius: 8px;
+      padding: 16px;
+      padding-right: 48px;
+      overflow-x: auto;
+      font-size: 0.9em;
+      line-height: 1.5;
+    }
+
+    .code-block code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      background: none;
+      padding: 0;
+      border-radius: 0;
+      font-size: inherit;
+      color: #24292f;
+    }
+
+    .code-block .copy-btn {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      background: #fff;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+      color: #656d76;
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+
+    .code-block:hover .copy-btn { opacity: 1; }
+    .code-block .copy-btn:hover { background: #f6f8fa; color: #24292f; }
+    .code-block .copy-btn.copied { color: #1a7f37; border-color: #1a7f37; }
+
+    /* Inline code */
+    p code, li code, td code, .step-text code, .step-note code, .faq-a code, .feature-card code {
+      font-family: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, "Liberation Mono", monospace;
+      background: #f6f8fa;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+
+    /* Success section */
+    .success-section {
+      background: #f6f8fa;
+      border-top: 1px solid #d1d9e0;
+      border-bottom: 1px solid #d1d9e0;
+      text-align: center;
+      padding: 56px 24px;
+    }
+
+    .success-section .section-title { color: #1a7f37; }
+
+    .success-list {
+      list-style: none;
+      padding: 0;
+      max-width: 380px;
+      margin: 20px auto 0;
+      text-align: left;
+    }
+
+    .success-list li {
+      padding: 6px 0;
+      font-size: 0.95em;
+      color: #24292f;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .check {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #1a7f37;
+      color: #fff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    /* Features grid */
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 12px;
+    }
+
+    .feature-card {
+      background: #f6f8fa;
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      padding: 16px;
+    }
+
+    .feature-card h4 { font-size: 0.92em; font-weight: 700; margin-bottom: 4px; }
+    .feature-card p { font-size: 0.85em; color: #656d76; line-height: 1.5; }
+
+    /* FAQ */
+    .faq-item {
+      border: 1px solid #d1d9e0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+    }
+
+    .faq-q {
+      width: 100%;
+      background: #fff;
+      border: none;
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 0.95em;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      color: #24292f;
+      font-family: inherit;
+      line-height: 1.4;
+    }
+
+    .faq-arrow {
+      font-size: 0.75em;
+      color: #656d76;
+      transition: transform 0.2s;
+      flex-shrink: 0;
+      margin-left: 12px;
+    }
+
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+
+    .faq-a {
+      display: none;
+      padding: 0 16px 14px;
+      color: #656d76;
+      font-size: 0.9em;
+      line-height: 1.7;
+    }
+
+    .faq-item.open .faq-a { display: block; }
+
+    /* Glossary table */
+    .glossary td {
+      padding: 10px 14px;
+      border-bottom: 1px solid #d1d9e0;
+      font-size: 0.92em;
+      vertical-align: top;
+    }
+
+    .glossary td:first-child {
+      font-weight: 700;
+      color: #24292f;
+      width: 140px;
+      white-space: nowrap;
+    }
+
+    .glossary td:last-child { color: #656d76; }
+
+    /* Footer */
+    .footer {
+      background: #f6f8fa;
+      border-top: 1px solid #d1d9e0;
+      padding: 32px 24px;
+      text-align: center;
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a { color: #656d76; font-size: 0.88em; font-weight: 500; }
+    .footer-credit { color: #8b949e; font-size: 0.82em; }
+
+    /* Responsive */
+    @media (max-width: 640px) {
+      .hero { padding: 100px 20px 48px; }
+      .hero h1 { font-size: 1.8em; }
+      section { padding: 40px 20px; }
+      .demo-section { padding: 40px 16px; }
+      .step { flex-direction: column; gap: 10px; }
+      .os-tabs { width: 100%; }
+      .os-tab { flex: 1; justify-content: center; padding: 8px 10px; font-size: 0.82em; }
+      .terminal-body { padding: 12px; font-size: 0.78em; min-height: 220px; }
+      .nav-links { display: none; }
+      .section-title { font-size: 1.4em; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Nav -->
+  <nav class="nav">
+    <a href="index.html" class="nav-brand">
+      <img src="assets/multigravity-logo.jpg" alt="">
+      Multigravity Pro
+    </a>
+    <div class="nav-links">
+      <a href="#setup">Setup</a>
+      <a href="#demo">Live Demo</a>
+      <a href="#faq">FAQ</a>
+      <a href="index.html">Developer Docs</a>
+    </div>
+  </nav>
+
+
+  <!-- Hero -->
+  <div class="hero">
+    <div class="hero-inner">
+      <span class="hero-label">Beginner's Guide</span>
+      <h1>Build apps with AI.<br>No experience needed.</h1>
+      <p class="hero-sub">
+        Antigravity is an AI code editor that writes code for you.
+        Multigravity lets you manage separate workspaces for each project.
+        This page gets you from zero to running in 5 minutes.
+      </p>
+      <a href="#setup" class="hero-cta">Start setup</a>
+    </div>
+  </div>
+
+
+  <!-- What is this -->
+  <section class="gray-bg" style="max-width: 100%; padding: 56px 24px;">
+    <div style="max-width: 720px; margin: 0 auto;">
+      <span class="section-label">Before we start</span>
+      <h2 class="section-title">What are these tools?</h2>
+      <p class="section-sub">If you're hearing words like "IDE", "terminal", and "profiles" for the first time, here's what they mean.</p>
+
+      <div class="cards">
+        <div class="card">
+          <h3>Antigravity</h3>
+          <p>A smart notepad for code. You describe what you want to build in plain English, and the AI writes the code. You don't need to know programming.</p>
+        </div>
+        <div class="card">
+          <h3>Profile / Workspace</h3>
+          <p>Like user accounts on your phone. Each one has its own login, settings, and projects &mdash; completely separate from the others.</p>
+        </div>
+        <div class="card">
+          <h3>Multigravity</h3>
+          <p>A tool that creates and switches between workspaces. Instead of logging in and out, you run one short command and a separate copy opens.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+
+  <!-- Animated Terminal Demo -->
+  <div class="demo-section" id="demo">
+    <div class="demo-inner">
+      <span class="section-label">Live preview</span>
+      <h2 class="section-title">Watch how it works</h2>
+      <p class="section-sub">This walkthrough types real commands and shows what you'll see in your terminal.</p>
+
+      <div class="terminal-window">
+        <div class="terminal-header">
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <div class="terminal-dot"></div>
+          <span class="terminal-title">Terminal</span>
+        </div>
+        <div class="terminal-body" id="terminalBody">
+          <span class="terminal-cursor" id="cursor"></span>
+        </div>
+      </div>
+
+      <div class="demo-steps" id="demoSteps">
+        <div class="demo-step-pill" data-step="0">Install</div>
+        <div class="demo-step-pill" data-step="1">Health Check</div>
+        <div class="demo-step-pill" data-step="2">Create Profile</div>
+        <div class="demo-step-pill" data-step="3">Launch</div>
+      </div>
+
+      <div class="demo-narration" id="demoNarration">Click play to start the walkthrough</div>
+
+      <div class="demo-controls">
+        <button class="demo-btn primary" id="demoPlayBtn" onclick="startDemo()">Play Walkthrough</button>
+        <button class="demo-btn" id="demoRestartBtn" onclick="restartDemo()" style="display:none;">Replay</button>
+        <button class="demo-btn" id="demoDownloadBtn" onclick="downloadVideo()">Download as Video</button>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Setup Guide -->
+  <section id="setup">
+    <span class="section-label">Step-by-step</span>
+    <h2 class="section-title">Setup guide</h2>
+    <p class="section-sub">Follow these steps exactly. Each one tells you what to do, where to click, and what you should see.</p>
+
+    <!-- Step 0 -->
+    <div class="step">
+      <div class="step-num">0</div>
+      <div class="step-body">
+        <div class="step-title">Make sure Antigravity is installed</div>
+        <p class="step-text">
+          You need the Antigravity IDE on your computer before using Multigravity.
+          If you already have it, skip to Step 1.
+          If not, download it from the official Antigravity website and install it like any other application.
+        </p>
+        <div class="step-note">
+          <strong>How to check:</strong> Look in your Applications folder (Mac), Start Menu (Windows), or run <code>which antigravity</code> in your terminal (Linux). If it's there, you're good.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <div class="step-title">Open your terminal</div>
+        <p class="step-text">
+          A <span class="jargon">terminal<span class="jargon-tip">A text-based way to talk to your computer. Instead of clicking buttons, you type short commands. Think of it as texting your computer.</span></span> is where you type commands. Think of it as texting instructions to your computer.
+        </p>
+
+        <div class="os-tabs" id="osTabsStep1">
+          <button class="os-tab active" onclick="switchOS('mac', 'step1')">Mac</button>
+          <button class="os-tab" onclick="switchOS('windows', 'step1')">Windows</button>
+          <button class="os-tab" onclick="switchOS('linux', 'step1')">Linux</button>
+        </div>
+
+        <div class="os-content active" id="step1-mac">
+          <p class="step-text" style="margin-top: 0;">
+            Press <strong>Command + Space</strong> on your keyboard.
+            A search bar appears. Type <strong>Terminal</strong> and press Enter.
+            A window with text opens &mdash; that's your terminal.
+          </p>
+        </div>
+        <div class="os-content" id="step1-windows">
+          <p class="step-text" style="margin-top: 0;">
+            Click the <strong>Start button</strong> (Windows icon, bottom-left of screen).
+            Type <strong>PowerShell</strong> and click <strong>"Windows PowerShell"</strong> from the results.
+            A blue window opens &mdash; that's your terminal.
+          </p>
+          <div class="step-warning">
+            <strong>Important:</strong> Use PowerShell, not Command Prompt. They look similar but are different. PowerShell has a blue icon.
+          </div>
+        </div>
+        <div class="os-content" id="step1-linux">
+          <p class="step-text" style="margin-top: 0;">
+            Press <strong>Ctrl + Alt + T</strong>. This opens the terminal on most Linux systems.
+            If that doesn't work, search for "Terminal" in your applications menu.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <div class="step-title">Install Multigravity</div>
+        <p class="step-text">
+          Copy the command below (click Copy), paste it into your terminal, and press <strong>Enter</strong>.
+          It downloads and sets up everything automatically.
+        </p>
+
+        <div class="os-tabs" id="osTabsStep2">
+          <button class="os-tab active" onclick="switchOS('mac', 'step2')">Mac / Linux</button>
+          <button class="os-tab" onclick="switchOS('windows', 'step2')">Windows</button>
+        </div>
+
+        <div class="os-content active" id="step2-mac">
+          <div class="code-block">
+            <pre><code>/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.sh)"</code></pre>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="step-note">
+            <strong>How to paste in terminal:</strong> Press <strong>Command + V</strong>, then press Enter.
+          </div>
+        </div>
+        <div class="os-content" id="step2-windows">
+          <div class="code-block">
+            <pre><code>irm https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.ps1 | iex</code></pre>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+          <div class="step-note">
+            <strong>How to paste in PowerShell:</strong> Right-click anywhere in the blue window. The text appears automatically. Then press Enter.
+          </div>
+        </div>
+
+        <p class="step-text" style="margin-top: 14px;">
+          Wait 10-30 seconds. Text will scroll by &mdash; that's normal. You'll see a success message when it's done.
+        </p>
+      </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <div class="step-title">Verify the installation</div>
+        <p class="step-text">Type this and press Enter. It runs a health check.</p>
+        <div class="code-block">
+          <pre><code>multigravity doctor</code></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="step-text" style="margin-top: 12px;">
+          You should see green checkmarks. If everything is green, you're ready.
+          If something is red, the message will tell you what to fix.
+        </p>
+        <div class="step-note">
+          <strong>What is "doctor"?</strong> It's a health check for the installation &mdash; it confirms Antigravity is found and all files are in the right place.
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <div class="step-title">Create your first workspace</div>
+        <p class="step-text">
+          Pick a name for your workspace &mdash; like the project you're working on, or just "work". Type this and press Enter:
+        </p>
+        <div class="code-block">
+          <pre><code>multigravity new my-project</code></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="step-text" style="margin-top: 12px;">
+          Replace <strong>my-project</strong> with whatever name you want.
+          Use only letters, numbers, and hyphens (the minus sign). No spaces.
+        </p>
+        <div class="step-note">
+          <strong>Name ideas:</strong> <code>work</code>, <code>personal</code>, <code>client-a</code>, <code>my-app</code>, <code>school</code>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-body">
+        <div class="step-title">Open your workspace</div>
+        <p class="step-text">Type the name you chose and press Enter:</p>
+        <div class="code-block">
+          <pre><code>multigravity my-project</code></pre>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <p class="step-text" style="margin-top: 12px;">
+          Antigravity opens with your workspace. You can log in, install extensions, and change settings &mdash; nothing will affect your other workspaces.
+        </p>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Success -->
+  <div class="success-section">
+    <div style="max-width: 500px; margin: 0 auto;">
+      <h2 class="section-title">Setup complete</h2>
+      <p style="color: #656d76; font-size: 0.95em; margin-bottom: 8px;">Here's what you just accomplished:</p>
+      <ul class="success-list">
+        <li><span class="check">&#10003;</span> Installed Multigravity on your computer</li>
+        <li><span class="check">&#10003;</span> Verified the installation with doctor</li>
+        <li><span class="check">&#10003;</span> Created your first workspace</li>
+        <li><span class="check">&#10003;</span> Launched Antigravity with your own space</li>
+      </ul>
+    </div>
+  </div>
+
+
+  <!-- What's next -->
+  <section>
+    <span class="section-label">Next steps</span>
+    <h2 class="section-title">What you can do now</h2>
+    <p class="section-sub">All of these are single-line commands you type in your terminal.</p>
+
+    <div class="features-grid">
+      <div class="feature-card">
+        <h4>More workspaces</h4>
+        <p>Run <code>multigravity new second-project</code> to create another. No limit.</p>
+      </div>
+      <div class="feature-card">
+        <h4>List workspaces</h4>
+        <p>Run <code>multigravity list</code> to see every workspace you've created.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Check status</h4>
+        <p>Run <code>multigravity status</code> to see which are open and their disk usage.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Save as template</h4>
+        <p>Run <code>multigravity template save my-project my-template</code> to reuse a setup.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Quick login switch</h4>
+        <p>Run <code>multigravity new client --auth-only</code> for a tiny 2 MB workspace that shares extensions.</p>
+      </div>
+      <div class="feature-card">
+        <h4>Back up</h4>
+        <p>Run <code>multigravity export my-project</code> to save a workspace to a file.</p>
+      </div>
+    </div>
+
+    <p style="margin-top: 28px; text-align: center;">
+      <a href="index.html" style="font-weight: 600;">Full command reference and developer docs &rarr;</a>
+    </p>
+  </section>
+
+  <hr class="divider">
+
+
+  <!-- FAQ -->
+  <section id="faq">
+    <span class="section-label">Questions</span>
+    <h2 class="section-title">Frequently asked</h2>
+    <p class="section-sub">Written for people who are new to all of this.</p>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Do I need to know how to code?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">
+        <strong>No.</strong> Antigravity is AI-powered &mdash; you describe what you want in plain English and the AI writes code for you. Multigravity just helps you organize separate workspaces. The only "coding" you do is typing short commands like <code>multigravity new work</code>.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is "vibe coding"?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">
+        Building apps by describing what you want in natural language instead of writing code yourself. You say "make me a to-do list app" and the AI generates the code. Antigravity + Multigravity is a setup for exactly this.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is the terminal scary? Can I break something?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">
+        The terminal is just a text box. You cannot break your computer by running the commands on this page. The worst that happens is a typo &mdash; just retype the command. Every command here has been tested.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Is this free?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Multigravity is free and open source. Antigravity IDE has its own pricing with a free tier included. Check the Antigravity website for current plans.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">What is the difference between "full" and "auth-only" profiles?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">
+        A <strong>full profile</strong> is a completely separate copy &mdash; its own extensions, settings, and login. Uses about 500 MB.<br><br>
+        An <strong>auth-only profile</strong> shares your extensions and settings but has a separate login. Uses about 2 MB. Use this when you just need to switch accounts.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">I got an error. What do I do?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">
+        Run <code>multigravity doctor</code> first &mdash; it checks what's wrong.<br><br>
+        <strong>"command not found"</strong> &mdash; Close your terminal and open a new one. The install added a command that needs a fresh terminal to appear.<br><br>
+        <strong>"Antigravity not found"</strong> &mdash; Install the Antigravity IDE from the official website first.<br><br>
+        Still stuck? <a href="https://github.com/Pulkit7070/multigravity-pro/issues">Open an issue on GitHub</a>.
+      </div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Does Multigravity change or update Antigravity?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a"><strong>No.</strong> Multigravity never touches the Antigravity IDE. It only creates separate workspace folders. When Antigravity releases updates (new AI models, features), your IDE updates through its own updater. All workspaces automatically use the latest version.</div>
+    </div>
+
+    <div class="faq-item">
+      <button class="faq-q" onclick="toggleFaq(this)">Does this work on Mac, Windows, and Linux?<span class="faq-arrow">&#9660;</span></button>
+      <div class="faq-a">Yes. All three are fully supported. The Windows version was rewritten and tested across 40+ scenarios.</div>
+    </div>
+  </section>
+
+  <hr class="divider">
+
+
+  <!-- Glossary -->
+  <section>
+    <span class="section-label">Reference</span>
+    <h2 class="section-title">Glossary</h2>
+    <p class="section-sub">Technical terms you might see, explained in plain language.</p>
+
+    <table class="glossary" style="width: 100%; border-collapse: collapse;">
+      <tr><td>Terminal</td><td>A text window where you type commands. On Mac it's called "Terminal", on Windows it's "PowerShell".</td></tr>
+      <tr><td>IDE</td><td>"Integrated Development Environment" &mdash; a code editor. Think of it as Microsoft Word, but for code. Antigravity is an IDE.</td></tr>
+      <tr><td>Profile</td><td>A separate, isolated space with its own login, settings, and projects. Like different user accounts on a phone.</td></tr>
+      <tr><td>Extension</td><td>An add-on that gives the editor extra abilities. Like apps on your phone &mdash; install the ones you need.</td></tr>
+      <tr><td>CLI</td><td>"Command Line Interface" &mdash; a tool you use by typing commands, not clicking buttons.</td></tr>
+      <tr><td>Auth-only</td><td>A lightweight workspace that only separates your login. Extensions and settings are shared. Uses almost no disk space.</td></tr>
+      <tr><td>Template</td><td>A saved copy of a workspace. Configure once, then stamp out new workspaces from it.</td></tr>
+      <tr><td>PATH</td><td>A list of folders your computer checks when you type a command. If you get "command not found", close and reopen your terminal.</td></tr>
+    </table>
+  </section>
+
+
+  <!-- Community / Connect -->
+  <div style="border-top: 1px solid #d1d9e0; border-bottom: 1px solid #d1d9e0; background: #fff; padding: 56px 24px;">
+    <div style="max-width: 640px; margin: 0 auto; text-align: center;">
+      <span class="section-label">Stay connected</span>
+      <h2 class="section-title">Get help, share feedback, stay updated</h2>
+      <p style="color: #656d76; font-size: 0.98em; line-height: 1.6; margin-bottom: 32px;">
+        Stuck on something? Want to request a feature? Just want to see what's coming next?
+        Connect with us &mdash; we're building this for people like you and your input matters.
+      </p>
+
+      <div style="display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; margin-bottom: 28px;">
+        <!-- GitHub -->
+        <a href="https://github.com/Pulkit7070/multigravity-pro" style="
+          display: flex; align-items: center; gap: 10px;
+          background: #24292f; color: #fff;
+          padding: 12px 24px; border-radius: 6px;
+          font-size: 0.92em; font-weight: 600;
+          transition: background 0.15s; text-decoration: none;
+        " onmouseover="this.style.background='#32383f'" onmouseout="this.style.background='#24292f'">
+          <svg width="18" height="18" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+          GitHub
+        </a>
+
+        <!-- X / Twitter -->
+        <a href="https://x.com/Pulkit7070" style="
+          display: flex; align-items: center; gap: 10px;
+          background: #fff; color: #24292f;
+          padding: 12px 24px; border-radius: 6px;
+          font-size: 0.92em; font-weight: 600;
+          border: 1px solid #d1d9e0;
+          transition: border-color 0.15s, background 0.15s; text-decoration: none;
+        " onmouseover="this.style.borderColor='#24292f'" onmouseout="this.style.borderColor='#d1d9e0'">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+          Follow on X
+        </a>
+      </div>
+
+      <div style="display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+        <a href="https://github.com/Pulkit7070/multigravity-pro/issues" style="
+          display: inline-block;
+          padding: 10px 20px; border-radius: 6px;
+          font-size: 0.88em; font-weight: 600;
+          color: #0969da; background: #f6f8fa;
+          border: 1px solid #d1d9e0;
+          transition: background 0.15s; text-decoration: none;
+        " onmouseover="this.style.background='#eef1f5'" onmouseout="this.style.background='#f6f8fa'">Report a bug or request a feature</a>
+        <a href="https://github.com/Pulkit7070/multigravity-pro/discussions" style="
+          display: inline-block;
+          padding: 10px 20px; border-radius: 6px;
+          font-size: 0.88em; font-weight: 600;
+          color: #0969da; background: #f6f8fa;
+          border: 1px solid #d1d9e0;
+          transition: background 0.15s; text-decoration: none;
+        " onmouseover="this.style.background='#eef1f5'" onmouseout="this.style.background='#f6f8fa'">Ask a question</a>
+      </div>
+    </div>
+  </div>
+
+
+  <!-- Footer -->
+  <div class="footer">
+    <div class="footer-links">
+      <a href="index.html">Developer Docs</a>
+      <a href="https://github.com/Pulkit7070/multigravity-pro">GitHub</a>
+      <a href="https://x.com/Pulkit7070">X / Twitter</a>
+      <a href="https://github.com/Pulkit7070/multigravity-pro/issues">Get Help</a>
+    </div>
+    <p class="footer-credit">
+      Multigravity Pro &mdash; built on <a href="https://github.com/sujitagarwal/multigravity-cli">multigravity-cli</a> by Sujit Agarwal. MIT License.
+    </p>
+  </div>
+
+
+  <!-- JavaScript -->
+  <script>
+    // ===== Copy =====
+    function copyCode(btn) {
+      var codeEl = btn.previousElementSibling
+        ? btn.previousElementSibling.querySelector('code') || btn.parentElement.querySelector('code')
+        : btn.parentElement.querySelector('code');
+      if (!codeEl) codeEl = btn.parentElement.querySelector('code');
+      navigator.clipboard.writeText(codeEl.innerText).then(function() {
+        btn.textContent = 'Copied!';
+        btn.classList.add('copied');
+        setTimeout(function() { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+      });
+    }
+
+    // ===== OS Switcher =====
+    function switchOS(os, group) {
+      var tabsId = 'osTabs' + group.charAt(0).toUpperCase() + group.slice(1);
+      var tabs = document.getElementById(tabsId);
+      if (!tabs) return;
+      tabs.querySelectorAll('.os-tab').forEach(function(t) { t.classList.remove('active'); });
+      var map = { mac: 0, windows: 1, linux: 2 };
+      var idx = map[os];
+      if (idx !== undefined && tabs.children[idx]) tabs.children[idx].classList.add('active');
+      document.querySelectorAll('[id^="' + group + '-"]').forEach(function(el) { el.classList.remove('active'); });
+      var target = document.getElementById(group + '-' + os);
+      if (target) target.classList.add('active');
+    }
+
+    // ===== FAQ =====
+    function toggleFaq(btn) {
+      var item = btn.parentElement;
+      var wasOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(function(el) { el.classList.remove('open'); });
+      if (!wasOpen) item.classList.add('open');
+    }
+
+    // ===== Demo sequence data =====
+    var demoSeq = [
+      {
+        step: 0,
+        narration: "Installing Multigravity with one command...",
+        command: "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/install.sh)\"",
+        output: [
+          { text: "", type: "output" },
+          { text: "  Downloading multigravity...", type: "output" },
+          { text: "  Installing to /usr/local/bin/multigravity...", type: "output" },
+          { text: "", type: "output" },
+          { text: "  \u2713  multigravity installed successfully", type: "success" },
+          { text: "", type: "output" }
+        ],
+        pause: 1600
+      },
+      {
+        step: 1,
+        narration: "Running a health check to make sure everything works...",
+        command: "multigravity doctor",
+        output: [
+          { text: "", type: "output" },
+          { text: "  Checking environment...", type: "output" },
+          { text: "", type: "output" },
+          { text: "  \u2713  Antigravity IDE found", type: "success" },
+          { text: "  \u2713  Profile directory ready", type: "success" },
+          { text: "  \u2713  Shell is supported", type: "success" },
+          { text: "  \u2713  All checks passed", type: "success" },
+          { text: "", type: "output" }
+        ],
+        pause: 1600
+      },
+      {
+        step: 2,
+        narration: "Creating a workspace called \"work\"...",
+        command: "multigravity new work",
+        output: [
+          { text: "", type: "output" },
+          { text: "  \u2713  Created profile \"work\"", type: "success" },
+          { text: "  \u2713  Launcher created", type: "success" },
+          { text: "", type: "output" },
+          { text: "  Ready! Run: multigravity work", type: "info" },
+          { text: "", type: "output" }
+        ],
+        pause: 1600
+      },
+      {
+        step: 3,
+        narration: "Opening the workspace...",
+        command: "multigravity work",
+        output: [
+          { text: "", type: "output" },
+          { text: "  Launching Antigravity with profile \"work\"...", type: "info" },
+          { text: "", type: "output" },
+          { text: "  Antigravity is opening. Start building.", type: "success" },
+          { text: "", type: "output" }
+        ],
+        pause: 2000
+      }
+    ];
+
+    // ===== DOM-based demo (the on-page animation) =====
+    var demoRunning = false;
+    var demoTimeout = null;
+
+    function startDemo() {
+      if (demoRunning) return;
+      demoRunning = true;
+      document.getElementById('demoPlayBtn').style.display = 'none';
+      document.getElementById('demoRestartBtn').style.display = 'none';
+      document.getElementById('terminalBody').innerHTML = '';
+      document.querySelectorAll('.demo-step-pill').forEach(function(el) { el.classList.remove('active', 'done'); });
+      runStep(0);
+    }
+
+    function runStep(i) {
+      if (i >= demoSeq.length) {
+        demoRunning = false;
+        document.getElementById('demoNarration').textContent = "Done. Four commands from install to launch. You're ready to build.";
+        document.getElementById('demoRestartBtn').style.display = 'inline-block';
+        return;
+      }
+      var s = demoSeq[i];
+      document.querySelectorAll('.demo-step-pill').forEach(function(el, idx) {
+        el.classList.remove('active');
+        if (idx < i) el.classList.add('done');
+        if (idx === i) el.classList.add('active');
+      });
+      document.getElementById('demoNarration').textContent = s.narration;
+      typeCmd(s.command, function() {
+        showLines(s.output, 0, function() {
+          var pill = document.querySelector('.demo-step-pill[data-step="' + i + '"]');
+          if (pill) { pill.classList.remove('active'); pill.classList.add('done'); }
+          demoTimeout = setTimeout(function() { runStep(i + 1); }, s.pause);
+        });
+      });
+    }
+
+    function typeCmd(cmd, cb) {
+      var body = document.getElementById('terminalBody');
+      var line = document.createElement('div');
+      line.className = 'terminal-line';
+      var prompt = document.createElement('span');
+      prompt.className = 'terminal-prompt';
+      prompt.textContent = '$ ';
+      line.appendChild(prompt);
+      var span = document.createElement('span');
+      span.className = 'terminal-command';
+      line.appendChild(span);
+      var cur = document.createElement('span');
+      cur.className = 'terminal-cursor';
+      line.appendChild(cur);
+      body.appendChild(line);
+      body.scrollTop = body.scrollHeight;
+      var idx = 0;
+      var iv = setInterval(function() {
+        if (idx < cmd.length) {
+          span.textContent += cmd[idx++];
+          body.scrollTop = body.scrollHeight;
+        } else {
+          clearInterval(iv);
+          if (cur.parentNode) cur.parentNode.removeChild(cur);
+          demoTimeout = setTimeout(cb, 400);
+        }
+      }, 55);
+    }
+
+    function showLines(lines, i, cb) {
+      if (i >= lines.length) { cb(); return; }
+      var body = document.getElementById('terminalBody');
+      var d = document.createElement('div');
+      d.className = 'terminal-line';
+      var sp = document.createElement('span');
+      sp.className = 'terminal-' + lines[i].type;
+      sp.textContent = lines[i].text;
+      d.appendChild(sp);
+      body.appendChild(d);
+      body.scrollTop = body.scrollHeight;
+      demoTimeout = setTimeout(function() { showLines(lines, i + 1, cb); }, lines[i].text ? 150 : 50);
+    }
+
+    function restartDemo() {
+      if (demoTimeout) clearTimeout(demoTimeout);
+      demoRunning = false;
+      document.getElementById('demoRestartBtn').style.display = 'none';
+      startDemo();
+    }
+
+    // ===== Download as video (canvas recording) =====
+    function downloadVideo() {
+      var btn = document.getElementById('demoDownloadBtn');
+      btn.disabled = true;
+      btn.textContent = 'Recording...';
+
+      var W = 800, H = 420;
+      var canvas = document.createElement('canvas');
+      canvas.width = W;
+      canvas.height = H;
+      var ctx = canvas.getContext('2d');
+
+      // Pick best supported format  prefer MP4, fall back to WebM
+      if (typeof MediaRecorder === 'undefined') {
+        alert('Your browser does not support video recording. Try Chrome or Edge.');
+        btn.disabled = false;
+        btn.textContent = 'Download as Video';
+        return;
+      }
+
+      var mimeType = '';
+      var fileExt = '';
+      var candidates = [
+        { mime: 'video/mp4;codecs=avc1', ext: 'mp4', blobType: 'video/mp4' },
+        { mime: 'video/mp4', ext: 'mp4', blobType: 'video/mp4' },
+        { mime: 'video/webm;codecs=vp9', ext: 'webm', blobType: 'video/webm' },
+        { mime: 'video/webm;codecs=vp8', ext: 'webm', blobType: 'video/webm' },
+        { mime: 'video/webm', ext: 'webm', blobType: 'video/webm' }
+      ];
+      var chosen = null;
+      for (var c = 0; c < candidates.length; c++) {
+        if (MediaRecorder.isTypeSupported(candidates[c].mime)) {
+          chosen = candidates[c];
+          break;
+        }
+      }
+      if (!chosen) {
+        alert('Your browser does not support video recording. Try Chrome or Edge.');
+        btn.disabled = false;
+        btn.textContent = 'Download as Video';
+        return;
+      }
+      mimeType = chosen.mime;
+      fileExt = chosen.ext;
+
+      var stream = canvas.captureStream(30);
+      var recorder = new MediaRecorder(stream, { mimeType: mimeType });
+      var chunks = [];
+      recorder.ondataavailable = function(e) { if (e.data.size > 0) chunks.push(e.data); };
+      recorder.onstop = function() {
+        var blob = new Blob(chunks, { type: chosen.blobType });
+        var url = URL.createObjectURL(blob);
+        var a = document.createElement('a');
+        a.href = url;
+        a.download = 'multigravity-walkthrough.' + fileExt;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        setTimeout(function() { URL.revokeObjectURL(url); }, 1000);
+        btn.disabled = false;
+        btn.textContent = 'Download as Video';
+      };
+
+      // Build timeline
+      var events = [];
+      var t = 600;
+
+      // Title card
+      events.push({ time: 0, action: 'title' });
+
+      demoSeq.forEach(function(step) {
+        var cmd = step.command;
+        for (var c = 0; c < cmd.length; c++) {
+          events.push({ time: t, action: 'type', char: cmd[c] });
+          t += 55;
+        }
+        events.push({ time: t, action: 'enter' });
+        t += 400;
+        step.output.forEach(function(line) {
+          events.push({ time: t, action: 'output', text: line.text, type: line.type });
+          t += (line.text ? 150 : 50);
+        });
+        t += step.pause;
+      });
+
+      events.push({ time: t, action: 'end' });
+      var totalDuration = t + 2000;
+
+      // State
+      var displayLines = [];
+      var currentCmd = '';
+      var isTyping = false;
+      var eventIdx = 0;
+      var startTime = null;
+      var showTitle = true;
+
+      var font = '14px Menlo, Consolas, "Courier New", monospace';
+      var headerH = 36;
+      var padX = 18;
+      var padY = 14;
+      var lineH = 22;
+
+      recorder.start();
+
+      function renderFrame(timestamp) {
+        if (!startTime) startTime = timestamp;
+        var elapsed = timestamp - startTime;
+
+        // Process events
+        while (eventIdx < events.length && events[eventIdx].time <= elapsed) {
+          var ev = events[eventIdx];
+          if (ev.action === 'title') {
+            showTitle = true;
+          } else if (ev.action === 'type') {
+            showTitle = false;
+            isTyping = true;
+            currentCmd += ev.char;
+          } else if (ev.action === 'enter') {
+            isTyping = false;
+            displayLines.push({ segments: [
+              { text: '$ ', color: '#3fb950' },
+              { text: currentCmd, color: '#e6edf3' }
+            ]});
+            currentCmd = '';
+          } else if (ev.action === 'output') {
+            var color = '#8b949e';
+            if (ev.type === 'success') color = '#3fb950';
+            if (ev.type === 'info') color = '#58a6ff';
+            displayLines.push({ segments: [{ text: ev.text, color: color }] });
+          } else if (ev.action === 'end') {
+            // nothing
+          }
+          eventIdx++;
+        }
+
+        // Draw background
+        ctx.fillStyle = '#24292f';
+        ctx.fillRect(0, 0, W, H);
+
+        // Draw header
+        ctx.fillStyle = '#1b1f23';
+        ctx.fillRect(0, 0, W, headerH);
+
+        // Header dots
+        ctx.fillStyle = '#484f58';
+        [16, 32, 48].forEach(function(x) {
+          ctx.beginPath();
+          ctx.arc(x, headerH / 2, 5, 0, Math.PI * 2);
+          ctx.fill();
+        });
+
+        // Header title
+        ctx.fillStyle = '#656d76';
+        ctx.font = '12px Menlo, Consolas, "Courier New", monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText('Terminal', W / 2, headerH / 2 + 4);
+        ctx.textAlign = 'left';
+
+        if (showTitle && displayLines.length === 0 && !currentCmd) {
+          // Title card
+          ctx.fillStyle = '#e6edf3';
+          ctx.font = 'bold 22px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('Multigravity Pro', W / 2, H / 2 - 20);
+          ctx.fillStyle = '#8b949e';
+          ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif';
+          ctx.fillText('Setup Walkthrough', W / 2, H / 2 + 10);
+          ctx.textAlign = 'left';
+        } else {
+          // Body text
+          ctx.font = font;
+          var y = headerH + padY + lineH;
+
+          displayLines.forEach(function(line) {
+            var x = padX;
+            line.segments.forEach(function(seg) {
+              ctx.fillStyle = seg.color;
+              ctx.fillText(seg.text, x, y);
+              x += ctx.measureText(seg.text).width;
+            });
+            y += lineH;
+          });
+
+          // Current typing line
+          if (isTyping || currentCmd) {
+            var x = padX;
+            ctx.fillStyle = '#3fb950';
+            ctx.fillText('$ ', x, y);
+            x += ctx.measureText('$ ').width;
+            ctx.fillStyle = '#e6edf3';
+            ctx.fillText(currentCmd, x, y);
+            x += ctx.measureText(currentCmd).width;
+
+            // Blinking cursor
+            if (Math.floor(elapsed / 500) % 2 === 0) {
+              ctx.fillStyle = '#e6edf3';
+              ctx.fillRect(x + 1, y - 13, 8, 16);
+            }
+          }
+        }
+
+        if (elapsed < totalDuration) {
+          requestAnimationFrame(renderFrame);
+        } else {
+          recorder.stop();
+        }
+      }
+
+      requestAnimationFrame(renderFrame);
+    }
+
+    // ===== Smooth scroll =====
+    document.querySelectorAll('a[href^="#"]').forEach(function(a) {
+      a.addEventListener('click', function(e) {
+        e.preventDefault();
+        var t = document.querySelector(this.getAttribute('href'));
+        if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+
+    // ===== Auto-play when visible =====
+    var obs = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        if (entry.isIntersecting && !demoRunning) {
+          setTimeout(function() { if (!demoRunning) startDemo(); }, 800);
+          obs.disconnect();
+        }
+      });
+    }, { threshold: 0.5 });
+    var tw = document.querySelector('.terminal-window');
+    if (tw) obs.observe(tw);
+  </script>
+
+</body>
+</html>
