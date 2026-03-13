@@ -5,10 +5,43 @@ REPO="Pulkit7070/multigravity-pro"
 BRANCH="main"
 RAW="https://raw.githubusercontent.com/$REPO/$BRANCH"
 INSTALL_DIR="/usr/local/bin"
+TMP_DIR="$(mktemp -d)"
 
 # ── helpers ──────────────────────────────────────────────────────────────────
 print_step () { echo "  → $1"; }
 abort ()       { echo "Error: $1" >&2; exit 1; }
+cleanup_tmp () { rm -rf "$TMP_DIR"; }
+trap cleanup_tmp EXIT
+
+download_file() {
+  local url=$1
+  local out=$2
+  local label=$3
+
+  print_step "Downloading $label..."
+  curl -fsSL "$url" -o "$out"
+}
+
+install_with_backup() {
+  local src=$1
+  local dest=$2
+  local mode=$3
+  local backup="${dest}.bak.$$"
+
+  if [ -f "$dest" ]; then
+    cp -f "$dest" "$backup"
+  fi
+
+  if install -m "$mode" "$src" "$dest"; then
+    rm -f "$backup"
+    return 0
+  fi
+
+  if [ -f "$backup" ]; then
+    mv -f "$backup" "$dest"
+  fi
+  abort "failed to install $dest and previous version was restored"
+}
 
 # ── platform ─────────────────────────────────────────────────────────────────
 case "$(uname -s)" in
@@ -42,14 +75,15 @@ fi
 echo "Installing Multigravity to $INSTALL_DIR ..."
 
 # ── download multigravity script ─────────────────────────────────────────────
-print_step "Downloading multigravity..."
-curl -fsSL "$RAW/multigravity" -o "$INSTALL_DIR/multigravity"
-chmod +x "$INSTALL_DIR/multigravity"
+script_tmp="$TMP_DIR/multigravity"
+download_file "$RAW/multigravity" "$script_tmp" "multigravity"
+install_with_backup "$script_tmp" "$INSTALL_DIR/multigravity" 755
 
 # ── download macOS icon ──────────────────────────────────────────────────────
 if [ "$PLATFORM" = "darwin" ]; then
-  print_step "Downloading icon..."
-  curl -fsSL "$RAW/icon.icns" -o "$INSTALL_DIR/icon.icns"
+  icon_tmp="$TMP_DIR/icon.icns"
+  download_file "$RAW/icon.icns" "$icon_tmp" "icon.icns"
+  install_with_backup "$icon_tmp" "$INSTALL_DIR/icon.icns" 644
 fi
 
 echo ""

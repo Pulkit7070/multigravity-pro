@@ -724,22 +724,71 @@ profile_stats() {
 }
 
 update_cli() {
-  local script_url="https://raw.githubusercontent.com/sujitagarwal/multigravity-cli/main/multigravity"
+  local script_url="https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/multigravity"
+  local checksum_url="https://raw.githubusercontent.com/Pulkit7070/multigravity-pro/main/multigravity.sha256"
   local target
+  local tmp_file
+  local tmp_checksum
+  local backup
+  local expected
+  local actual
   target="$(script_path)"
 
   if [ -z "$target" ]; then
     abort "could not determine script path for update"
   fi
 
+  if ! command -v curl >/dev/null 2>&1; then
+    abort "curl is required for update"
+  fi
+
+  if command -v sha256sum >/dev/null 2>&1; then
+    :
+  elif command -v shasum >/dev/null 2>&1; then
+    :
+  else
+    abort "sha256 checksum tool not found (need sha256sum or shasum)"
+  fi
+
+  tmp_file="$target.tmp"
+  tmp_checksum="$target.tmp.sha256"
+  backup="$target.bak"
+
   print_info "Updating multigravity from $script_url ..."
-  if curl -fsSL "$script_url" -o "$target.tmp"; then
-    mv "$target.tmp" "$target"
+  if ! curl -fsSL "$script_url" -o "$tmp_file"; then
+    rm -f "$tmp_file" "$tmp_checksum"
+    abort "failed to download update"
+  fi
+
+  if ! curl -fsSL "$checksum_url" -o "$tmp_checksum"; then
+    rm -f "$tmp_file" "$tmp_checksum"
+    abort "failed to download checksum"
+  fi
+
+  expected="$(awk '{print $1}' "$tmp_checksum" | head -n1)"
+  [ -n "$expected" ] || abort "invalid checksum response"
+  if command -v sha256sum >/dev/null 2>&1; then
+    actual="$(sha256sum "$tmp_file" | awk '{print $1}')"
+  else
+    actual="$(shasum -a 256 "$tmp_file" | awk '{print $1}')"
+  fi
+
+  if [ "$expected" != "$actual" ]; then
+    rm -f "$tmp_file" "$tmp_checksum"
+    abort "checksum verification failed during update"
+  fi
+
+  cp -f "$target" "$backup" 2>/dev/null || true
+  if mv "$tmp_file" "$target"; then
     chmod +x "$target"
+    rm -f "$tmp_checksum" "$backup"
     print_info "Successfully updated multigravity!"
   else
-    rm -f "$target.tmp"
-    abort "failed to download update"
+    rm -f "$tmp_file" "$tmp_checksum"
+    if [ -f "$backup" ]; then
+      mv -f "$backup" "$target"
+    fi
+    abort "failed to install update and previous version was restored"
   fi
 }
 
