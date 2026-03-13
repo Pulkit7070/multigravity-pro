@@ -1,0 +1,35 @@
+name: Update Checksums
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - multigravity
+      - multigravity.ps1
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-checksums:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Regenerate checksum files
+        run: bash scripts/update-checksums.sh
+
+      - name: Commit checksum updates
+        run: |
+          if git diff --quiet -- multigravity.sha256 multigravity.ps1.sha256; then
+            echo "No checksum changes."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add multigravity.sha256 multigravity.ps1.sha256
+          git commit -m "chore: refresh checksum files"
+          git push
